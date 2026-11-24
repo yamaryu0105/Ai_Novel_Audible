@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="night">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ANA">
+<meta name="theme-color" content="#1c1a26">
+<title>ANA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* ===== テーマ（色はここだけで決める） ===== */
+:root[data-theme="night"]{
+  --bg:#1c1a26; --surface:#2d2840; --surface2:#3b3355; --text:#ffffff; --sub:#cfc8e6; --muted:#a9a2bd;
+  --accent:#c9b8ff; --on-accent:#1c1a26; --ok:#8fd19e; --warn:#e9c46a; --danger:#f0a3a3;
+  --line:rgba(255,255,255,.08); --border:rgba(255,255,255,.22);
+  --read-past:rgba(255,255,255,.32); --read-near:rgba(255,255,255,.45); --read-next:rgba(255,255,255,.62);
+  --mark:transparent; --body-font:'Noto Sans JP',sans-serif;
+}
+:root[data-theme="paper"]{
+  --bg:#f3ecdf; --surface:#e9dfcc; --surface2:#ddd0b8; --text:#2e2a24; --sub:#6b6152; --muted:#6b6152;
+  --accent:#8a4b2f; --on-accent:#f3ecdf; --ok:#3f7a4c; --warn:#9a6b12; --danger:#a63d3d;
+  --line:rgba(46,42,36,.10); --border:rgba(46,42,36,.25);
+  --read-past:rgba(46,42,36,.40); --read-near:rgba(46,42,36,.55); --read-next:rgba(46,42,36,.72);
+  --mark:#f2c9dc; --body-font:'Noto Serif JP',serif;
+}
+:root{ --fs:1; }
+:root[data-fs="small"]{ --fs:.87; }
+:root[data-fs="large"]{ --fs:1.13; }
+
+/* ===== 共通 ===== */
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;-webkit-text-size-adjust:100%;transition:background .2s,color .2s}
+button,input,textarea,select{font-family:inherit;font-size:inherit;color:inherit}
+button{border:0;background:none;cursor:pointer;padding:0}
+a{color:inherit}
+.screen{display:none;min-height:100vh;min-height:100dvh;max-width:520px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 14px) 18px calc(env(safe-area-inset-bottom) + 20px);flex-direction:column;gap:14px}
+.screen.on{display:flex}
+.bar{display:flex;align-items:center;gap:8px}
+.bar h1{font-size:18px;margin:0;flex:1}
+.icon-btn{width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:22px;flex:none}
+.icon-btn svg,.ic{stroke:var(--text)}
+.card{background:var(--surface);border-radius:16px;padding:14px 16px}
+.sec{font-size:12px;font-weight:700;color:var(--accent);padding:4px 4px 0}
+.rows{background:var(--surface);border-radius:16px;padding:2px 14px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:46px;border-bottom:1px solid var(--line);font-size:14px;text-decoration:none;color:var(--text);width:100%;text-align:left}
+.row:last-child{border-bottom:0}
+.row .v{font-size:12px;color:var(--sub);text-align:right}
+.btn{height:52px;border-radius:16px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;font-weight:700;width:100%}
+.btn.primary{background:var(--accent);color:var(--on-accent)}
+.btn.outline{border:1.5px solid var(--border)}
+.btn.small{height:40px;border-radius:12px;font-size:13px;width:auto;padding:0 14px}
+.chip{height:34px;padding:0 12px;border-radius:17px;background:var(--surface);font-size:12px;flex:none}
+.chip.on{background:var(--accent);color:var(--on-accent);font-weight:700}
+.seg{display:flex;background:var(--bg);border-radius:12px;padding:3px;gap:3px}
+.seg button{flex:1;height:36px;border-radius:9px;font-size:13px}
+.seg button.on{background:var(--accent);color:var(--on-accent);font-weight:700}
+.field{display:flex;flex-direction:column;gap:4px;padding:10px 0;border-bottom:1px solid var(--line)}
+.field:last-child{border-bottom:0}
+.field label{font-size:13px}
+.field .hint{font-size:11px;color:var(--muted)}
+.inp{height:42px;border-radius:10px;border:1px solid var(--border);background:var(--bg);padding:0 12px;font-size:16px;width:100%}
+.inp.mono{font-family:ui-monospace,Menlo,monospace;font-size:14px}
+.muted{color:var(--muted)}
+.note{font-size:12px;line-height:1.6;color:var(--muted)}
+.stub{font-size:11px;color:var(--warn);font-weight:700}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 24px);transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:13px;opacity:0;pointer-events:none;transition:.2s;max-width:86vw;z-index:9}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.sr{position:absolute;left:-9999px}
+
+/* ===== ホーム ===== */
+.brand{font-size:28px;font-weight:700;letter-spacing:.06em}
+.brand-sub{font-size:11px;color:var(--muted)}
+.resume .t{font-size:18px;font-weight:700}
+.prog{height:4px;border-radius:2px;background:var(--surface2)}
+.prog i{display:block;height:4px;border-radius:2px;background:var(--accent)}
+.empty{padding:18px 0;text-align:center;font-size:13px;color:var(--muted)}
+
+/* ===== 聴く（A案） ===== */
+#scr-player{padding-left:0;padding-right:0;height:100vh;height:100dvh;min-height:0}
+#scr-player .bar{padding:0 14px}
+.lyrics{flex:1;min-height:0;overflow-y:auto;padding:8px 24px 40vh;display:flex;flex-direction:column;gap:14px;font-family:var(--body-font);
+  -webkit-mask-image:linear-gradient(transparent 0,#000 6%,#000 90%,transparent 100%);mask-image:linear-gradient(transparent 0,#000 6%,#000 90%,transparent 100%)}
+.ly{margin:0;font-size:calc(16px * var(--fs));line-height:1.65;color:var(--read-next);cursor:pointer;border-radius:8px;transition:color .2s}
+.ly.past{color:var(--read-past)} .ly.near{color:var(--read-near)}
+.ly .who{display:block;font-family:'Noto Sans JP',sans-serif;font-size:11px;font-weight:700;letter-spacing:.04em;margin-bottom:2px}
+.ly.thought .tx{font-style:italic}
+.ly.now{color:var(--text);font-size:calc(23px * var(--fs));line-height:1.5;font-weight:700}
+.ly.now .tx{background:linear-gradient(transparent 58%,var(--mark) 58%)}
+.ctrl{padding:8px 24px 0;display:flex;flex-direction:column;gap:12px}
+.ctrl .time{display:flex;justify-content:space-between;font-size:12px;color:var(--sub);margin-top:6px}
+.ctrl .main{display:flex;align-items:center;justify-content:space-between}
+.play{width:72px;height:72px;border-radius:36px;background:var(--text);display:flex;align-items:center;justify-content:center}
+.play svg{fill:var(--bg)}
+.tools{display:flex;justify-content:space-around;font-size:12px;color:var(--sub)}
+.tools button{min-width:64px;min-height:44px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.tools b{font-size:15px;color:var(--text)}
+
+/* ===== 作る ===== */
+.steps{display:flex;gap:6px;font-size:11px}
+.steps span{flex:1;text-align:center;padding:6px 0;border-radius:8px;background:var(--surface2);color:var(--muted)}
+.steps span.on{background:var(--accent);color:var(--on-accent);font-weight:700}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.stats div{background:var(--surface);border-radius:14px;padding:12px}
+.stats small{display:block;font-size:11px;color:var(--sub)}
+.stats b{font-size:19px}
+
+/* ===== 設定 ===== */
+.themes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.theme-pick{border-radius:12px;border:2px solid transparent;padding:8px;display:flex;flex-direction:column;gap:6px;text-align:left}
+.theme-pick.on{border-color:var(--accent)}
+.theme-pick .pv{height:48px;border-radius:8px;display:flex;flex-direction:column;justify-content:center;gap:5px;padding:0 10px}
+.theme-pick .pv i{display:block;height:4px;border-radius:2px}
+.gaps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.gaps label{font-size:11px;color:var(--sub)}
+.danger{color:var(--danger);font-size:13px;min-height:44px}
+
+/* ===== キャスト・読み方 ===== */
+.cast-row{display:flex;align-items:center;gap:12px;min-height:60px;border-bottom:1px solid var(--line)}
+.avatar{width:36px;height:36px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#1c1a26;flex:none}
+.cast-row .nm{font-size:15px;font-weight:500}
+.cast-row .st{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dict-row{display:flex;align-items:center;gap:10px;min-height:46px;border-bottom:1px solid var(--line)}
+.dict-row:last-child{border-bottom:0}
+.dict-row span{flex:1;font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.tag{font-size:10px;padding:2px 6px;border-radius:8px;border:1px solid var(--border);color:var(--sub);flex:none}
+</style>
+</head>
+<body>
+
+<!-- ==================== ホーム ==================== -->
+<section class="screen" id="scr-home">
+  <div class="bar">
+    <div style="flex:1"><div class="brand">ANA</div><div class="brand-sub">Ai Novel Audible</div></div>
+    <button class="icon-btn" data-go="settings" aria-label="設定"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" class="ic" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-2.7-1.1l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.1-2.7l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 2.7-1.1V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0 1.1 2.7H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1.3z"/></svg></button>
+  </div>
+  <div id="home-resume"></div>
+  <button class="btn outline" data-stub="3" id="btn-open">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" class="ic" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+    エピソードファイルを開く
+  </button>
+  <div style="flex:1">
+    <div style="font-size:13px;font-weight:700;color:var(--sub);margin-bottom:6px">最近聴いた</div>
+    <div id="home-recent"></div>
+    <p class="note">一覧は「どこまで聴いたか」だけを覚えています。音声はファイルアプリのフォルダにあるので、続きを聴く時は同じファイルを選び直します。</p>
+  </div>
+  <button class="btn primary" data-go="create">＋ 新しいエピソードを作る</button>
+  <button class="btn outline small" data-go="player" style="align-self:center">聴く画面の見本を見る</button>
+</section>
+
+<!-- ==================== 聴く ==================== -->
+<section class="screen" id="scr-player">
+  <div class="bar">
+    <button class="icon-btn" data-go="home" aria-label="ホームへ戻る"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" class="ic" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+    <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700">見本：音の無い世界編</div><div style="font-size:12px;color:var(--sub)">0026 ・ 段階3で本物のファイルを再生します</div></div>
+  </div>
+  <div class="lyrics" id="lyrics"></div>
+  <div class="ctrl">
+    <div><div class="prog"><i style="width:34%"></i></div><div class="time"><span>5:42</span><span>0026 ／ 全10件</span><span>−11:08</span></div></div>
+    <div class="main">
+      <button class="icon-btn" data-stub="3" aria-label="15秒戻る"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" class="ic" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/></svg></button>
+      <button class="icon-btn" data-stub="3" aria-label="前の文"><svg width="28" height="28" viewBox="0 0 24 24" style="fill:var(--text)" aria-hidden="true"><path d="M11 6l-8 6 8 6zM21 6l-8 6 8 6z"/></svg></button>
+      <button class="play" data-stub="3" aria-label="再生"><svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5l12 7-12 7z"/></svg></button>
+      <button class="icon-btn" data-stub="3" aria-label="次の文"><svg width="28" height="28" viewBox="0 0 24 24" style="fill:var(--text)" aria-hidden="true"><path d="M13 6l8 6-8 6zM3 6l8 6-8 6z"/></svg></button>
+      <button class="icon-btn" data-stub="3" aria-label="15秒進む"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" class="ic" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v4h-4"/></svg></button>
+    </div>
+    <div class="tools">
+      <button data-stub="3"><b id="pl-speed">1.2×</b><span>速度</span></button>
+      <button data-stub="3"><b>≡</b><span>目次</span></button>
+      <button data-stub="3"><b>☆</b><span>しおり</span></button>
+      <button data-stub="3"><b>◷</b><span>タイマー</span></button>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 作る ==================== -->
+<section class="screen" id="scr-create">
+  <div class="bar">
+    <button class="icon-btn" data-go="home" aria-label="戻る"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" class="ic" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <h1>新しいエピソードを作る</h1>
+  </div>
+  <div class="steps"><span class="on">1 本文を選ぶ</span><span>2 確認</span><span>3 作成・保存</span></div>
+  <div class="card"><div class="stub">段階2で動きます</div><p class="note" style="margin:6px 0 0">本文md（### [0026] ●AI の形）を選ぶと、音声の長さ・費用・作る時間の目安と、登場する声を表示します。</p></div>
+  <div class="stats"><div><small>音声の長さ</small><b>—</b></div><div><small>費用の目安</small><b>—</b></div><div><small>作る時間</small><b>—</b></div></div>
+  <div style="flex:1"></div>
+  <button class="btn primary" data-stub="2">本文ファイルを選ぶ</button>
+</section>
+
+<!-- ==================== 設定 ==================== -->
+<section class="screen" id="scr-settings">
+  <div class="bar">
+    <button class="icon-btn" data-go="home" aria-label="戻る"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" class="ic" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <h1>設定</h1>
+  </div>
+
+  <div class="sec">見た目</div>
+  <div class="card" style="display:flex;flex-direction:column;gap:12px">
+    <div class="themes">
+      <button class="theme-pick" data-theme-pick="night"><div class="pv" style="background:#1c1a26;border:1px solid rgba(255,255,255,.15)"><i style="width:60%;background:rgba(255,255,255,.3)"></i><i style="width:85%;height:6px;background:#fff"></i><i style="width:70%;background:rgba(255,255,255,.3)"></i></div><span style="font-size:13px;font-weight:700">夜（ダーク）</span></button>
+      <button class="theme-pick" data-theme-pick="paper"><div class="pv" style="background:#f3ecdf;border:1px solid rgba(46,42,36,.15)"><i style="width:60%;background:#c9bda6"></i><i style="width:85%;height:6px;background:linear-gradient(transparent 30%,#f2c9dc 30%)"></i><i style="width:70%;background:#c9bda6"></i></div><span style="font-size:13px;font-weight:700">紙（本のページ）</span></button>
+    </div>
+    <div><div style="font-size:13px;margin-bottom:6px">文字の大きさ</div><div class="seg" id="seg-fs"><button data-fs="small">小</button><button data-fs="normal">ふつう</button><button data-fs="large">大</button></div></div>
+  </div>
+
+  <div class="sec">再生</div>
+  <div class="card"><div style="font-size:13px;margin-bottom:6px">いつもの速度</div><div class="seg" id="seg-speed"><button data-speed="1">1.0×</button><button data-speed="1.2">1.2×</button><button data-speed="1.5">1.5×</button><button data-speed="2">2.0×</button></div></div>
+
+  <div class="sec">作る</div>
+  <div class="card" style="padding-top:2px;padding-bottom:2px">
+    <div class="field">
+      <label for="in-key">Gemini APIキー</label>
+      <div style="display:flex;gap:6px"><input id="in-key" class="inp mono" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="AIza…"><button class="btn outline small" id="btn-keyshow" type="button">表示</button></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:4px"><button class="btn outline small" id="btn-keytest" type="button">接続テスト</button><span id="keytest-msg" class="note"></span></div>
+      <span class="hint">この端末の中にだけ保存します。書き出しにも含めません。</span>
+    </div>
+    <div class="field"><label for="in-tmodel">話者判定のモデル</label><input id="in-tmodel" class="inp mono" autocapitalize="off" spellcheck="false"></div>
+    <div class="field"><label for="in-smodel">読み上げのモデル</label><input id="in-smodel" class="inp mono" autocapitalize="off" spellcheck="false"></div>
+    <div class="field">
+      <span style="font-size:13px">間の長さ（秒）</span>
+      <div class="gaps">
+        <div><label for="in-gapn">地の文のあと</label><input id="in-gapn" class="inp" type="number" inputmode="decimal" step="0.05" min="0" max="2"></div>
+        <div><label for="in-gapl">台詞のあと</label><input id="in-gapl" class="inp" type="number" inputmode="decimal" step="0.05" min="0" max="2"></div>
+        <div><label for="in-gapc">話し手が変わる時</label><input id="in-gapc" class="inp" type="number" inputmode="decimal" step="0.05" min="0" max="2"></div>
+      </div>
+      <span class="hint">次に作るエピソードから効きます（作った音声の中に入る間のため）。</span>
+    </div>
+  </div>
+
+  <div class="rows">
+    <button class="row" data-go="cast"><span>キャストと声</span><span class="v" id="v-cast">…</span></button>
+    <button class="row" data-go="dict"><span>読み方の登録</span><span class="v" id="v-dict">…</span></button>
+  </div>
+  <button class="danger" id="btn-clearpos">聴いた位置の記録をすべて消す</button>
+  <p class="note" style="text-align:center;margin:0">ANA 段階1（土台）</p>
+</section>
+
+<!-- ==================== キャストと声 ==================== -->
+<section class="screen" id="scr-cast">
+  <div class="bar">
+    <button class="icon-btn" data-go="settings" aria-label="戻る"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" class="ic" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <h1>キャストと声</h1>
+  </div>
+  <label for="cast-q" class="sr">名前で探す</label>
+  <input id="cast-q" class="inp" placeholder="名前で探す" style="border:0;background:var(--surface)">
+  <div style="display:flex;gap:6px;overflow-x:auto" id="cast-groups"></div>
+  <div class="card" style="padding:4px 14px"><div id="cast-list"></div></div>
+  <p class="note"><span class="stub">段階4で動きます：</span>試聴・編集・声の作り直し・追加・書き出し／読み込み。</p>
+  <button class="danger" id="btn-resetcast">キャストを初期状態に戻す</button>
+</section>
+
+<!-- ==================== 読み方 ==================== -->
+<section class="screen" id="scr-dict">
+  <div class="bar">
+    <button class="icon-btn" data-go="settings" aria-label="戻る"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" class="ic" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <h1>読み方の登録</h1>
+  </div>
+  <p class="note" style="margin:0">作る時、読み上げに送る文だけを置き換えます（画面の表示は本文のまま）。長い登録から先に当てはめます。「名前」は前後に漢字が続かない時だけ置き換えます（「詠さん」は置き換え、「詠唱」は置き換えない）。</p>
+  <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:13px" id="dict-count"></b><span class="stub">追加・削除・試し読みは段階4</span></div>
+  <div class="rows" id="dict-list"></div>
+  <button class="danger" id="btn-resetdict">読み方を初期状態に戻す</button>
+</section>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+// ===== PURE START =====
+var ANA_VERSION = 'phase1-2026-11-25';
+
+var DEFAULT_SETTINGS = {
+  theme: 'night', fontSize: 'normal', speed: 1.2, apiKey: '',
+  textModel: 'gemini-3.7-flash', ttsModel: 'gemini-3.8-flash-tts',
+  gapNarr: 0.20, gapLine: 0.35, gapChange: 0.15
+};
+
+// 設定の読み戻し（型ごとに既定値で補う。boolean は x !== undefined ? x : 既定 の形）
+function restoreSettings(d){
+  d = d && typeof d === 'object' ? d : {};
+  var s = {};
+  Object.keys(DEFAULT_SETTINGS).forEach(function(k){
+    var def = DEFAULT_SETTINGS[k], v = d[k];
+    if (typeof def === 'boolean') s[k] = (v !== undefined ? !!v : def);
+    else if (typeof def === 'number') { var n = Number(v); s[k] = (v !== undefined && v !== null && v !== '' && isFinite(n)) ? n : def; }
+    else s[k] = (typeof v === 'string') ? v : def;
+  });
+  if (['night', 'paper'].indexOf(s.theme) < 0) s.theme = 'night';
+  if (['small', 'normal', 'large'].indexOf(s.fontSize) < 0) s.fontSize = 'normal';
+  if ([1, 1.2, 1.5, 2].indexOf(s.speed) < 0) s.speed = 1.2;
+  ['gapNarr', 'gapLine', 'gapChange'].forEach(function(k){ s[k] = Math.min(2, Math.max(0, Math.round(s[k] * 100) / 100)); });
+  return s;
+}
+
+var NARRATOR = { voiceId: 'Sulafat', style: '聞き取りやすく、落ち着いたトーンで自然に。感情は込めすぎない。テンポよく、やや速めに読む。' };
+
+// key, 名前, 呼び名, 区分, 性別, 声ID, 基本の演技指示, 色
+var SEED_CAST_ROWS = [
+ ['yuu','音無 悠',['悠','音無悠'],'main','male','voice_j7c1srifj8dz','明るく、軽快に、カッコつける。爽やかに。アニメ声。','#7fa6e6'],
+ ['akane','桜乃 茜',['茜','アカネ'],'main','female','voice_fum338ljnhh1','可愛く高めで、うれしそうに、声を弾ませて。テンポよく。アニメ声。','#e07aa4'],
+ ['aqua','白鳥 水愛',['アクア','水愛'],'main','female','voice_eig6k5ojgg66','可愛く高め、優しく清楚なアニメ声。','#7fb2e6'],
+ ['seria','氷見 瀬梨亜',['セリア','瀬梨亜'],'main','female','voice_pi30f7p7ehfz','可愛く高めで、強気に、ハキハキと、テンポよく。アニメ声。','#f0a36b'],
+ ['luna','霜月 ルナ',['ルナ'],'main','female','voice_mf18y57esu3t','クールに、ミステリアスに。アニメ声。','#a99be6'],
+ ['karen','桃瀬 カレン',['カレン'],'main','female','voice_h1lmnv15vd1w','声を弾ませて。テンポよく','#f0b3d0'],
+ ['saika','夜桜 裁花',['裁花'],'main','female','voice_epr2ye76p8d7','強気に凛として、冷ややかに、歯切れよく。少し挑発するように。アニメ声。','#8fd1b8'],
+ ['yui','白花 結依',['結依'],'main','female','voice_z5d5vf9fy7p6','可愛く高めに、マイペースで。ダウナー少女で抑揚は無くす。アニメ声。','#b8c4d6'],
+ ['miyu','みゆ',['音無美遊','美遊'],'main','female','voice_p3zdxan0d0cu','可愛く元気に声を弾ませて。無邪気に、テンポよく。アニメ声。','#f5c76b'],
+ ['lilibell','リリベル',['リリィ','リリ'],'main','female','voice_98u3xrvml9xs','高めに幼く。ふわふわと、のんびり、語尾を伸ばして。無邪気に。アニメ声。','#d7b8f0'],
+ ['tia','セレスティア',['ティア'],'main','female','voice_5o40vizygfpj','淡々と、丁寧に、冷静に。感情を抑えて。アニメ声。','#9ad0e6'],
+ ['shar','シャルメ',['シャル'],'main','female','voice_ybxcik0fqqmk','高めで、生意気に、からかうように、テンポよく。いたずらっぽく。アニメ声。','#f29a9a'],
+ ['livi','オリヴィエル',['リヴィ'],'main','female','voice_h1n85bxjywvm','高めにおっとりと、ゆったり、語尾を伸ばして。微笑むように。アニメ声。','#e6d38f'],
+ ['alicia','九条 アリシア・ローズ',['アリシア'],'sub','female','voice_2m1njslfcv7h','高めに、豪快に、さっぱりと、テンポよく。アニメ声。','#e68f8f'],
+ ['uta','九条 詠',['詠'],'sub','female','voice_gtftmwid0jqs','低めでお姉様のような優雅に、余裕たっぷりに。少しからかうように。アニメ声。','#b49be0'],
+ ['iris','アイリス・ノヴァ',['アイリス'],'sub','female','voice_kvs07ebj1qhj','高めに、凛として、丁寧に。気品をもって。アニメ声。','#9fc9f0'],
+ ['guren','紅蓮',[],'sub','female','voice_18ukupg6sqxn','かなり高めに可愛く、堂々と、自信たっぷりに。古風に。アニメ声。','#f08a6b'],
+ ['sekka','雪華',[],'sub','female','voice_29z31m2gimom','低めで可愛く、おしとやかに、静かに、丁寧に。アニメ声。','#c2dcef'],
+ ['noa','日向 乃亜',['乃亜','のあち'],'sub','female','voice_gr4zawndox93','可愛く、ギャルのようなテンポよく。明るく。アニメ声。','#f5b36b'],
+ ['moeha','柚原 萌葉',['萌葉','もえち'],'sub','female','voice_5g00h7006cqn','可愛く高めの萌声で、ほわほわと、のんびり、語尾を伸ばして。にこにこと。アニメ声。','#f2c2dc'],
+ ['rena','桐谷 玲奈',['玲奈','れなち'],'sub','female','voice_yxtukjwkmcyf','高めで。キレよく。クールな冷静キャラ。アニメ声。','#9fd6c4'],
+ ['chinatsu','雨宮 千夏',['千夏'],'sub','female','voice_rhgm1x55ujr0','高く、明るく、さっぱりと、テンポよく。からかうように。アニメ声。','#f0c98a'],
+ ['sakuto','鳴宮 朔斗',['朔斗'],'sub','male','voice_uv3avugy3h5u','低めに飄々と、軽く、余裕たっぷりに。からかうように。アニメ声。','#9aa8c4'],
+ ['kazu','カズ',['伊達 夏珠','夏珠'],'sub','male','voice_kxyljudi8iqv','インテリキャラで冷静に。アニメ声。','#a8b89a'],
+ ['raizu','ライズ',['五十嵐 雷図','雷図'],'sub','male','voice_nvcws40p6twg','低めのヤンキー。荒っぽく、勢いよく、ぶっきらぼうに。アニメ声。','#e6d06b'],
+ ['leon','天城 レオン',['レオン'],'sub','male','voice_q4zo9a588dov','凛々しく、真っ直ぐに、誠実に。アニメ声。','#8fb0d6'],
+ ['rozeria','ロゼリア',['ロゼリア・フォン・エーデリア'],'isekai','female','voice_8a8s87xkog2p','可愛く高め、高飛車に、自信たっぷりに。お嬢様らしく優雅に。アニメ声。','#f0a0c0'],
+ ['richel','リシェル',[],'isekai','female','voice_8dhx6dhu4lg1','優しく、丁寧に。穏やかに微笑むように。アニメ声。','#a8dca0'],
+ ['levin','レヴィン',['レヴィン・グレイス'],'isekai','male','voice_ww2pegf9pnim','低めにぶっきらぼうに、鋭く、突き放すように。強気に。アニメ声。','#9aa0b8'],
+ ['ruila','ルイラ',[],'isekai','female','voice_qhs7h27pdpra','可愛く高めで、余裕たっぷりに、穏やかに。知的に。アニメ声。','#c0a8e6'],
+ ['dario','ダリオ',[],'isekai','male','voice_q568fkvqisbp','低め豪快に、気さくに。力みすぎない。アニメ声。','#c4a27a'],
+ ['silfa','シルファ',['シルファ・ラピリス'],'isekai','female','voice_p50vdjqupg59','可愛く高めで、強気に、ツンツンと。テンポよく。アニメ声。','#f29ac8'],
+ ['rorosy','ロロシー',['ロロシー・ラピリス'],'isekai','female','voice_r56ydzrj03z1','高めで、おしとやかに、にこにこと。穏やかに。アニメ声。','#9ac0f0']
+];
+
+// 番号, 種類, 性別, 声ID, 基本の演技指示
+var SEED_MOB_ROWS = [
+ ['C1','モブ女・若い・明るい','female','voice_y1gtlcy0293g','高めで、明るく、自然に。アニメ声。'],
+ ['C2','モブ女・若い・控えめ','female','voice_hfgt5tjxfqwb','高めで、柔らかく、控えめに。アニメ声。'],
+ ['C3','モブ女・大人・丁寧','female','voice_7nid4e72wq41','丁寧に、落ち着いて、ハキハキと。アニメ声。'],
+ ['C4','モブ女・大人・母親世代','female','voice_fi4pj5b0y2fo','温かく、穏やかに。アニメ声。'],
+ ['C5','モブ女・年配','female','voice_o9wv4clwf0f2','ゆっくり、優しく。アニメ声。'],
+ ['C6','モブ男・若い・明るい','male','voice_dg47e9zk4xqp','明るく、自然に。アニメ声。'],
+ ['C7','モブ男・若い・クール','male','voice_up6lgvb4r2xr','低めに、そっけなく。アニメ声。'],
+ ['C8','モブ男・中年・丁寧','male','voice_a70h4xdgctug','落ち着いて、丁寧に。アニメ声。'],
+ ['C9','モブ男・中年・豪快','male','voice_0pvibz8datqy','豪快に、気さくに。力みすぎない。アニメ声。'],
+ ['C10','モブ男・年配','male','voice_xl964iowk4v8','ゆっくり、重々しく。アニメ声。'],
+ ['C11','幼い女の子・元気','female','voice_wgek01bn47d2','とても高く幼く、無邪気に、元気よく。アニメ声。'],
+ ['C12','幼い女の子・内気','female','voice_7phj70qr8zy5','とても高く幼く、可愛く。恥ずかしそうに、おずおずと。アニメ声。'],
+ ['C13','幼い男の子・わんぱく（女声）','female','voice_ch0evtjfcd6q','ボーイッシュに、元気よく、わんぱくに。アニメ声。'],
+ ['C14','幼い男の子・おとなしい（女声）','female','voice_rbwh0cxncwfh','ボーイッシュに、素直に、少し緊張して。アニメ声。'],
+ ['C15','敵の男・荒っぽい','male','voice_6ivg57jntgtb','荒っぽく、威圧するように。アニメ声。'],
+ ['C16','敵の男・怪物','male','voice_zmfczee93l6h','とても低く、唸るように、重々しく。アニメ声。'],
+ ['C17','敵の男・冷酷','male','voice_5iufp6oi6i63','冷たく、淡々と、見下すように。アニメ声。'],
+ ['C18','敵の女・冷ややか','female','voice_mds83z0r8taq','冷ややかに、嘲るように、余裕たっぷりに。アニメ声。'],
+ ['C19','敵の女・荒っぽい','female','voice_hp6vlbgy356m','荒っぽく、威勢よく、挑発するように。アニメ声。'],
+ ['C20','敵の女・人ならざる','female','voice_au7ahklp5d2h','低く、妖しく、ゆったりと、威圧するように。アニメ声。']
+];
+
+var SEED_DICT = [
+ ['九条 詠','くじょう うた','exact'],['詠','うた','name'],['夜桜','よざくら','exact'],['裁花','さいか','name'],
+ ['白花','しらはな','exact'],['結依','ゆい','name'],['白鳥','しらとり','exact'],['水愛','アクア','name'],
+ ['氷見','ひみ','exact'],['瀬梨亜','セリア','name'],['桜乃','さくらの','exact'],['桃瀬','ももせ','exact'],
+ ['霜月','しもつき','exact'],['鳴宮','なるみや','exact'],['朔斗','さくと','name'],['紅蓮','ぐれん','name'],
+ ['雪華','せっか','name'],['緋鞠','ひまり','name'],['萌葉','もえは','name'],['千夏','ちなつ','name'],
+ ['雫','しずく','name'],['運命裁断','フェイト・シザーズ','exact'],['剛鉄','ごうてつ','name'],['撫子','なでしこ','name'],
+ ['海人','かいと','name'],['水月','みづき','name'],['恵美','めぐみ','name'],['美沙','みさ','name'],
+ ['美奈','みな','name'],['健二','けんじ','name'],['健一','けんいち','name']
+];
+
+function buildSeedCast(){
+  return {
+    version: 1,
+    narrator: { voiceId: NARRATOR.voiceId, style: NARRATOR.style },
+    cast: SEED_CAST_ROWS.map(function(r){
+      return { key: r[0], name: r[1], aliases: r[2].slice(), group: r[3], gender: r[4], voiceId: r[5], style: r[6], color: r[7],
+               description: '', testLine: '', history: [], candidates: [] };
+    }),
+    mobs: SEED_MOB_ROWS.map(function(r){
+      return { code: r[0], label: r[1], gender: r[2], voiceId: r[3], style: r[4], description: '', history: [] };
+    }),
+    fixedMob: { 'パナフェ': 'C11' }
+  };
+}
+
+function buildSeedDict(){
+  return SEED_DICT.map(function(r){ return { from: r[0], to: r[1], mode: r[2] }; });
+}
+
+// 読み方の当てはめ（段階1では表示と検証のみ。段階2の作成で使う）
+var KANJI_RE = /[一-鿿々〆ヶ]/;
+function applyReadings(text, dict){
+  var list = (dict || []).filter(function(d){ return d && d.from && d.to; })
+    .slice().sort(function(a, b){ return b.from.length - a.from.length; });
+  var out = '', i = 0, s = String(text || '');
+  while (i < s.length) {
+    var hit = null;
+    for (var k = 0; k < list.length; k++) {
+      var d = list[k];
+      if (s.substr(i, d.from.length) !== d.from) continue;
+      if (d.mode === 'name') {
+        var prev = i > 0 ? s[i - 1] : '', next = s[i + d.from.length] || '';
+        if (KANJI_RE.test(prev) || KANJI_RE.test(next)) continue;
+      }
+      hit = d; break;
+    }
+    if (hit) { out += hit.to; i += hit.from.length; }
+    else { out += s[i]; i++; }
+  }
+  return out;
+}
+
+// 色の読みやすさ（WCAG のコントラスト比）
+function hexToRgb(h){ h = h.replace('#', ''); if (h.length === 3) h = h.split('').map(function(c){ return c + c; }).join(''); return [0, 2, 4].map(function(i){ return parseInt(h.substr(i, 2), 16); }); }
+function luminance(hex){ return hexToRgb(hex).map(function(v){ v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }).reduce(function(a, v, i){ return a + v * [0.2126, 0.7152, 0.0722][i]; }, 0); }
+function contrast(a, b){ var x = luminance(a), y = luminance(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); }
+// 紙テーマではキャラ色を暗くして読みやすくする
+function darken(hex, f){ return '#' + hexToRgb(hex).map(function(v){ return ('0' + Math.round(v * f).toString(16)).slice(-2); }).join(''); }
+function nameColor(hex, theme){
+  if (theme !== 'paper') return hex;
+  var bg = '#f3ecdf', f = 0.75, c = darken(hex, f);
+  while (contrast(c, bg) < 4.5 && f > 0.2) { f -= 0.05; c = darken(hex, f); }
+  return c;
+}
+function initialOf(c){
+  var parts = String(c.name || '').split(/\s+/);
+  return parts.length > 1 ? String((c.aliases && c.aliases[0]) || parts[parts.length - 1])[0] : String(c.name || '?')[0];
+}
+// ===== PURE END =====
+
+// ===== 保存（設定・聴いた位置＝localStorage／キャスト・辞書＝IndexedDB） =====
+var Store = (function(){
+  var DB = 'ana_db', ST = 'kv', dbp = null, mem = {};
+  function lsGet(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
+  function lsSet(k, v){ try { localStorage.setItem(k, v); return true; } catch(e){ return false; } }
+  function open(){
+    if (dbp) return dbp;
+    dbp = new Promise(function(res){
+      try {
+        if (!window.indexedDB) return res(null);
+        var rq = indexedDB.open(DB, 1);
+        rq.onupgradeneeded = function(){ rq.result.createObjectStore(ST); };
+        rq.onsuccess = function(){ res(rq.result); };
+        rq.onerror = function(){ res(null); };
+      } catch(e){ res(null); }
+    });
+    return dbp;
+  }
+  async function get(k){
+    var db = await open();
+    if (!db) { var v = lsGet('ana_kv_' + k); return v ? JSON.parse(v) : (mem[k] || null); }
+    return new Promise(function(res){
+      var rq = db.transaction(ST, 'readonly').objectStore(ST).get(k);
+      rq.onsuccess = function(){ res(rq.result === undefined ? null : rq.result); };
+      rq.onerror = function(){ res(null); };
+    });
+  }
+  async function set(k, v){
+    var db = await open();
+    if (!db) { mem[k] = v; lsSet('ana_kv_' + k, JSON.stringify(v)); return; }
+    return new Promise(function(res, rej){
+      var tx = db.transaction(ST, 'readwrite');
+      tx.objectStore(ST).put(v, k);
+      tx.oncomplete = function(){ res(); };
+      tx.onerror = function(){ rej(tx.error); };
+    });
+  }
+  function getSettings(){ var raw = lsGet('ana_settings'); var d = null; try { d = raw ? JSON.parse(raw) : null; } catch(e){} return restoreSettings(d); }
+  function saveSettings(s){ return lsSet('ana_settings', JSON.stringify(s)); }
+  function getPositions(){ try { return JSON.parse(lsGet('ana_pos') || '{}') || {}; } catch(e){ return {}; } }
+  function clearPositions(){ try { localStorage.removeItem('ana_pos'); } catch(e){} }
+  return { get: get, set: set, getSettings: getSettings, saveSettings: saveSettings, getPositions: getPositions, clearPositions: clearPositions };
+})();
+
+// ===== アプリ =====
+var App = (function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var S = Store.getSettings();
+  var CAST = null, DICT = null, castGroup = 'main';
+  var GROUPS = [['main', '主要'], ['sub', '準レギュラー'], ['isekai', '異世界'], ['mob', 'モブ']];
+  var SCREENS = ['home', 'player', 'create', 'settings', 'cast', 'dict'];
+
+  function toast(msg){ var t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast._t); toast._t = setTimeout(function(){ t.classList.remove('on'); }, 2200); }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+  function save(){ Store.saveSettings(S); }
+
+  function applyTheme(){
+    var root = document.documentElement;
+    root.setAttribute('data-theme', S.theme);
+    root.setAttribute('data-fs', S.fontSize);
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', S.theme === 'paper' ? '#f3ecdf' : '#1c1a26');
+    document.querySelectorAll('[data-theme-pick]').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-theme-pick') === S.theme); });
+    document.querySelectorAll('#seg-fs button').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-fs') === S.fontSize); });
+    document.querySelectorAll('#seg-speed button').forEach(function(b){ b.classList.toggle('on', Number(b.getAttribute('data-speed')) === S.speed); });
+    $('pl-speed').textContent = S.speed.toFixed(1) + '×';
+    if (CAST) { renderLyrics(); renderCast(); }
+  }
+
+  function go(name){
+    if (SCREENS.indexOf(name) < 0) name = 'home';
+    SCREENS.forEach(function(n){ $('scr-' + n).classList.toggle('on', n === name); });
+    if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
+    window.scrollTo(0, 0);
+    if (name === 'home') renderHome();
+    if (name === 'settings') renderSettings();
+    if (name === 'cast') renderCast();
+    if (name === 'dict') renderDict();
+    if (name === 'player') renderLyrics();
+  }
+
+  // ---- ホーム ----
+  function renderHome(){
+    var pos = Store.getPositions(), keys = Object.keys(pos).sort(function(a, b){ return (pos[b].updatedAt || '') < (pos[a].updatedAt || '') ? -1 : 1; });
+    $('home-resume').innerHTML = keys.length ? '' : '';
+    $('home-recent').innerHTML = keys.length
+      ? keys.slice(0, 5).map(function(k){ var p = pos[k]; return '<div class="row"><span>' + esc(p.title) + '</span><span class="v">' + (p.finished ? '聴き終わり' : Math.round((p.pos / (p.duration || 1)) * 100) + '%') + '</span></div>'; }).join('')
+      : '<div class="empty">まだありません</div>';
+  }
+
+  // ---- 聴く（見本） ----
+  var SAMPLE = [
+    { k: 'narr', t: '今からおよそ100年前の、精霊界の最果て――辺境の地。' },
+    { k: 'narr', t: '悠の右手には、小さな、そして少し冷たい手の感触があった。' },
+    { k: 'line', w: '音無 悠', t: '「ここがリリベルが居たところか……何もないな、リリベル」' },
+    { k: 'narr', t: '悠が静かに語りかけると、幼いリリベルはビクッと小さな肩を揺らした。' },
+    { k: 'line', w: 'リリベル', t: '「……おにぃ、ちゃん……？ ……ここ、なにも、ないのぉ。……冷たくて、暗くて、誰もいないのぉ」', now: true },
+    { k: 'narr', t: 'ぽつりと漏らした少女の言葉。かつて食欲の悪魔に育児放棄され、この何もない精霊界の辺境に捨てられた彼女。' },
+    { k: 'thought', w: '音無 悠', t: '（……ああ、やっぱり、お前はただ、寂しかっただけなんだな）' },
+    { k: 'narr', t: '悠は、自分の胸の奥が締め付けられるのを感じた。' }
+  ];
+  function castByName(n){ return (CAST && CAST.cast || []).find(function(c){ return c.name === n; }); }
+  function renderLyrics(){
+    var nowIdx = SAMPLE.findIndex(function(x){ return x.now; });
+    $('lyrics').innerHTML = SAMPLE.map(function(x, i){
+      var cls = 'ly ' + (x.k === 'thought' ? 'thought ' : '') + (i === nowIdx ? 'now' : i < nowIdx - 2 ? 'past' : i < nowIdx ? 'near' : '');
+      var c = x.w ? castByName(x.w) : null;
+      var who = x.w ? '<span class="who" style="color:' + nameColor(c ? c.color : '#cccccc', S.theme) + '">' + esc(x.w) + (x.k === 'thought' ? ' ・ 心の声' : '') + '</span>' : '';
+      return '<p class="' + cls + '" data-stub="3">' + who + '<span class="tx">' + esc(x.t) + '</span></p>';
+    }).join('');
+  }
+
+  // ---- 設定 ----
+  function renderSettings(){
+    $('in-key').value = S.apiKey; $('in-tmodel').value = S.textModel; $('in-smodel').value = S.ttsModel;
+    $('in-gapn').value = S.gapNarr.toFixed(2); $('in-gapl').value = S.gapLine.toFixed(2); $('in-gapc').value = S.gapChange.toFixed(2);
+    $('v-cast').textContent = CAST ? (CAST.cast.length + 'キャラ ＋ モブ' + CAST.mobs.length + ' ＋ ナレーター ›') : '…';
+    $('v-dict').textContent = DICT ? (DICT.length + '語 ›') : '…';
+  }
+  function bindSettings(){
+    document.querySelectorAll('[data-theme-pick]').forEach(function(b){ b.onclick = function(){ S.theme = b.getAttribute('data-theme-pick'); save(); applyTheme(); }; });
+    document.querySelectorAll('#seg-fs button').forEach(function(b){ b.onclick = function(){ S.fontSize = b.getAttribute('data-fs'); save(); applyTheme(); }; });
+    document.querySelectorAll('#seg-speed button').forEach(function(b){ b.onclick = function(){ S.speed = Number(b.getAttribute('data-speed')); save(); applyTheme(); }; });
+    $('in-key').onchange = function(){ S.apiKey = $('in-key').value.trim(); save(); toast('APIキーを保存しました'); };
+    $('btn-keyshow').onclick = function(){ var p = $('in-key').type === 'password'; $('in-key').type = p ? 'text' : 'password'; $('btn-keyshow').textContent = p ? '隠す' : '表示'; };
+    $('in-tmodel').onchange = function(){ S.textModel = $('in-tmodel').value.trim() || DEFAULT_SETTINGS.textModel; save(); renderSettings(); };
+    $('in-smodel').onchange = function(){ S.ttsModel = $('in-smodel').value.trim() || DEFAULT_SETTINGS.ttsModel; save(); renderSettings(); };
+    [['in-gapn', 'gapNarr'], ['in-gapl', 'gapLine'], ['in-gapc', 'gapChange']].forEach(function(p){
+      $(p[0]).onchange = function(){ var d = {}; Object.keys(S).forEach(function(k){ d[k] = S[k]; }); d[p[1]] = $(p[0]).value; S = restoreSettings(d); save(); renderSettings(); };
+    });
+    $('btn-keytest').onclick = keyTest;
+    $('btn-clearpos').onclick = function(){ if (confirm('聴いた位置の記録をすべて消します。よろしいですか？')) { Store.clearPositions(); toast('消しました'); } };
+  }
+  async function keyTest(){
+    var key = $('in-key').value.trim(), msg = $('keytest-msg');
+    if (!key) { msg.textContent = 'キーが空です'; return; }
+    S.apiKey = key; save();
+    msg.textContent = '確認中…'; msg.style.color = '';
+    try {
+      var res = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=100', { headers: { 'x-goog-api-key': key } });
+      var j = await res.json().catch(function(){ return null; });
+      if (!res.ok) { msg.textContent = 'NG：' + res.status + ' ' + (j && j.error && j.error.message || ''); msg.style.color = 'var(--danger)'; return; }
+      var names = ((j && j.models) || []).map(function(m){ return String(m.name || '').replace(/^models\//, ''); });
+      var tts = names.indexOf(S.ttsModel) >= 0, txt = names.indexOf(S.textModel) >= 0;
+      msg.textContent = 'OK：つながりました' + (names.length ? '（読み上げモデル' + (tts ? 'あり' : '一覧に見当たらず') + '・話者判定モデル' + (txt ? 'あり' : '一覧に見当たらず') + '）' : '');
+      msg.style.color = 'var(--ok)';
+    } catch(e){ msg.textContent = 'NG：通信できませんでした（' + e.message + '）'; msg.style.color = 'var(--danger)'; }
+  }
+
+  // ---- キャスト ----
+  function renderCast(){
+    if (!CAST) return;
+    $('cast-groups').innerHTML = GROUPS.map(function(g){
+      var n = g[0] === 'mob' ? CAST.mobs.length : CAST.cast.filter(function(c){ return c.group === g[0]; }).length;
+      return '<button class="chip' + (g[0] === castGroup ? ' on' : '') + '" data-group="' + g[0] + '">' + g[1] + ' ' + n + '</button>';
+    }).join('');
+    document.querySelectorAll('#cast-groups [data-group]').forEach(function(b){ b.onclick = function(){ castGroup = b.getAttribute('data-group'); renderCast(); }; });
+    var q = ($('cast-q').value || '').replace(/\s/g, '');
+    var items = castGroup === 'mob'
+      ? CAST.mobs.map(function(m){ return { name: m.code + ' ' + m.label, initial: m.code.replace('C', ''), color: '#bdb6cf', style: m.style }; })
+      : CAST.cast.filter(function(c){ return c.group === castGroup; }).map(function(c){ return { name: c.name, initial: initialOf(c), color: c.color, style: c.style }; });
+    if (q) {
+      var all = CAST.cast.map(function(c){ return { name: c.name, initial: initialOf(c), color: c.color, style: c.style, all: [c.name].concat(c.aliases).join('') }; })
+        .concat(CAST.mobs.map(function(m){ return { name: m.code + ' ' + m.label, initial: m.code.replace('C', ''), color: '#bdb6cf', style: m.style, all: m.code + m.label }; }));
+      items = all.filter(function(x){ return (x.all || x.name).replace(/\s/g, '').indexOf(q) >= 0; });
+    }
+    $('cast-list').innerHTML = items.length ? items.map(function(x){
+      return '<div class="cast-row"><span class="avatar" style="background:' + esc(x.color) + '">' + esc(x.initial) + '</span><span style="flex:1;min-width:0"><span class="nm" style="display:block">' + esc(x.name) + '</span><span class="st" style="display:block">' + esc(x.style) + '</span></span><button class="icon-btn" data-stub="4" aria-label="' + esc(x.name) + 'の声を聴く" style="background:var(--surface2)"><svg width="16" height="16" viewBox="0 0 24 24" style="fill:var(--text)" aria-hidden="true"><path d="M7 5l12 7-12 7z"/></svg></button></div>';
+    }).join('') : '<div class="empty">見つかりません</div>';
+  }
+
+  // ---- 読み方 ----
+  function renderDict(){
+    if (!DICT) return;
+    $('dict-count').textContent = '登録済み ' + DICT.length + '語';
+    $('dict-list').innerHTML = DICT.slice().sort(function(a, b){ return b.from.length - a.from.length; }).map(function(d){
+      return '<div class="dict-row"><span>' + esc(d.from) + '</span><span class="muted">' + esc(d.to) + '</span><span class="tag">' + (d.mode === 'name' ? '名前' : 'そのまま') + '</span></div>';
+    }).join('');
+  }
+
+  async function loadData(){
+    CAST = await Store.get('cast');
+    if (!CAST || !CAST.cast) { CAST = buildSeedCast(); await Store.set('cast', CAST); }
+    DICT = await Store.get('dict');
+    if (!Array.isArray(DICT)) { DICT = buildSeedDict(); await Store.set('dict', DICT); }
+  }
+
+  async function init(){
+    applyTheme();
+    document.addEventListener('click', function(e){
+      var g = e.target.closest('[data-go]'); if (g) { e.preventDefault(); go(g.getAttribute('data-go')); return; }
+      var s = e.target.closest('[data-stub]'); if (s) { toast('段階' + s.getAttribute('data-stub') + 'で動きます'); }
+    });
+    bindSettings();
+    $('cast-q').oninput = renderCast;
+    $('btn-resetcast').onclick = async function(){ if (confirm('キャストを初期状態に戻します。編集した声IDや指示は消えます。よろしいですか？')) { CAST = buildSeedCast(); await Store.set('cast', CAST); renderCast(); toast('初期状態に戻しました'); } };
+    $('btn-resetdict').onclick = async function(){ if (confirm('読み方を初期状態に戻します。追加した登録は消えます。よろしいですか？')) { DICT = buildSeedDict(); await Store.set('dict', DICT); renderDict(); toast('初期状態に戻しました'); } };
+    window.addEventListener('hashchange', function(){ go(location.hash.slice(1)); });
+    go(location.hash.slice(1) || 'home');
+    await loadData();
+    applyTheme();
+    go(location.hash.slice(1) || 'home');
+    App.ready = true;
+  }
+  return { init: init, go: go, get settings(){ return S; }, get cast(){ return CAST; }, get dict(){ return DICT; }, ready: false };
+})();
+
+App.init();
+</script>
+</body>
+</html>

@@ -7,6 +7,8 @@
 <meta name="apple-mobile-web-app-title" content="ANA">
 <meta name="theme-color" content="#1c1a26">
 <title>ANA</title>
+<link rel="apple-touch-icon" href="ana-icon.png">
+<link rel="icon" type="image/png" href="ana-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@400;600&display=swap" rel="stylesheet">
 <style>
@@ -62,6 +64,8 @@ a{color:inherit}
 .field label{font-size:13px}
 .field .hint{font-size:11px;color:var(--muted)}
 .inp{height:42px;border-radius:10px;border:1px solid var(--border);background:var(--bg);padding:0 12px;font-size:16px;width:100%}
+.inp{-webkit-appearance:none;appearance:none}
+select.inp{font-size:14px;background-image:linear-gradient(45deg,transparent 50%,var(--sub) 50%),linear-gradient(135deg,var(--sub) 50%,transparent 50%);background-position:calc(100% - 18px) 18px,calc(100% - 13px) 18px;background-size:5px 5px;background-repeat:no-repeat;padding-right:32px}
 .inp.mono{font-family:ui-monospace,Menlo,monospace;font-size:14px}
 .muted{color:var(--muted)}
 .note{font-size:12px;line-height:1.6;color:var(--muted)}
@@ -215,8 +219,20 @@ a{color:inherit}
       <div style="display:flex;align-items:center;gap:10px;margin-top:4px"><button class="btn outline small" id="btn-keytest" type="button">接続テスト</button><span id="keytest-msg" class="note"></span></div>
       <span class="hint">この端末の中にだけ保存します。書き出しにも含めません。</span>
     </div>
-    <div class="field"><label for="in-tmodel">話者判定のモデル</label><input id="in-tmodel" class="inp mono" autocapitalize="off" spellcheck="false"></div>
-    <div class="field"><label for="in-smodel">読み上げのモデル</label><input id="in-smodel" class="inp mono" autocapitalize="off" spellcheck="false"></div>
+    <div class="field"><label for="in-tmodel">話者判定のモデル</label>
+      <select id="in-tmodel" class="inp">
+        <option value="gemini-3.8-flash">gemini-3.8-flash（最新・年内半額）</option>
+        <option value="gemini-3.7-flash">gemini-3.7-flash（年内半額・試作で確認済み）</option>
+        <option value="gemini-3.6-flash">gemini-3.6-flash（年内半額）</option>
+        <option value="gemini-3-flash-preview">gemini-3-flash-preview（プレビュー・低価格）</option>
+        <option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite（軽量・3.1より高品質）</option>
+        <option value="gemini-3.1-flash-lite">gemini-3.1-flash-lite（軽量・最安）</option>
+        <option value="gemini-flash-latest">gemini-flash-latest（常に最新／結果が変わる可能性あり）</option>
+      </select></div>
+    <div class="field"><label for="in-smodel">読み上げのモデル</label>
+      <select id="in-smodel" class="inp">
+        <option value="gemini-3.8-flash-tts">gemini-3.8-flash-tts（作った声が使えることを確認済み）</option>
+      </select></div>
     <div class="field">
       <span style="font-size:13px">間の長さ（秒）</span>
       <div class="gaps">
@@ -233,7 +249,7 @@ a{color:inherit}
     <button class="row" data-go="dict"><span>読み方の登録</span><span class="v" id="v-dict">…</span></button>
   </div>
   <button class="danger" id="btn-clearpos">聴いた位置の記録をすべて消す</button>
-  <p class="note" style="text-align:center;margin:0">ANA 段階1（土台）</p>
+  <p class="note" style="text-align:center;margin:0">ANA 段階1.1（土台）</p>
 </section>
 
 <!-- ==================== キャストと声 ==================== -->
@@ -266,7 +282,7 @@ a{color:inherit}
 
 <script>
 // ===== PURE START =====
-var ANA_VERSION = 'phase1-2026-11-25';
+var ANA_VERSION = 'phase1.1-2026-11-25';
 
 var DEFAULT_SETTINGS = {
   theme: 'night', fontSize: 'normal', speed: 1.2, apiKey: '',
@@ -287,9 +303,15 @@ function restoreSettings(d){
   if (['night', 'paper'].indexOf(s.theme) < 0) s.theme = 'night';
   if (['small', 'normal', 'large'].indexOf(s.fontSize) < 0) s.fontSize = 'normal';
   if ([1, 1.2, 1.5, 2].indexOf(s.speed) < 0) s.speed = 1.2;
+  s.textModel = pickModel(s.textModel, TEXT_MODEL_LIST, DEFAULT_SETTINGS.textModel);
+  s.ttsModel = pickModel(s.ttsModel, TTS_MODEL_LIST, DEFAULT_SETTINGS.ttsModel);
   ['gapNarr', 'gapLine', 'gapChange'].forEach(function(k){ s[k] = Math.min(2, Math.max(0, Math.round(s[k] * 100) / 100)); });
   return s;
 }
+
+var TEXT_MODEL_LIST = ['gemini-3.8-flash','gemini-3.7-flash','gemini-3.6-flash','gemini-3-flash-preview','gemini-3.5-flash-lite','gemini-3.1-flash-lite','gemini-flash-latest'];
+var TTS_MODEL_LIST = ['gemini-3.8-flash-tts'];
+function pickModel(v, list, def){ return list.indexOf(v) !== -1 ? v : def; }
 
 var NARRATOR = { voiceId: 'Sulafat', style: '聞き取りやすく、落ち着いたトーンで自然に。感情は込めすぎない。テンポよく、やや速めに読む。' };
 
@@ -551,8 +573,8 @@ var App = (function(){
     document.querySelectorAll('#seg-speed button').forEach(function(b){ b.onclick = function(){ S.speed = Number(b.getAttribute('data-speed')); save(); applyTheme(); }; });
     $('in-key').onchange = function(){ S.apiKey = $('in-key').value.trim(); save(); toast('APIキーを保存しました'); };
     $('btn-keyshow').onclick = function(){ var p = $('in-key').type === 'password'; $('in-key').type = p ? 'text' : 'password'; $('btn-keyshow').textContent = p ? '隠す' : '表示'; };
-    $('in-tmodel').onchange = function(){ S.textModel = $('in-tmodel').value.trim() || DEFAULT_SETTINGS.textModel; save(); renderSettings(); };
-    $('in-smodel').onchange = function(){ S.ttsModel = $('in-smodel').value.trim() || DEFAULT_SETTINGS.ttsModel; save(); renderSettings(); };
+    $('in-tmodel').onchange = function(){ S.textModel = pickModel($('in-tmodel').value, TEXT_MODEL_LIST, DEFAULT_SETTINGS.textModel); save(); renderSettings(); };
+    $('in-smodel').onchange = function(){ S.ttsModel = pickModel($('in-smodel').value, TTS_MODEL_LIST, DEFAULT_SETTINGS.ttsModel); save(); renderSettings(); };
     [['in-gapn', 'gapNarr'], ['in-gapl', 'gapLine'], ['in-gapc', 'gapChange']].forEach(function(p){
       $(p[0]).onchange = function(){ var d = {}; Object.keys(S).forEach(function(k){ d[k] = S[k]; }); d[p[1]] = $(p[0]).value; S = restoreSettings(d); save(); renderSettings(); };
     });

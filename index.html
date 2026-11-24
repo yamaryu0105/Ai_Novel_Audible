@@ -111,6 +111,11 @@ select.inp{font-size:14px;background-image:linear-gradient(45deg,transparent 50%
 .stats small{display:block;font-size:11px;color:var(--sub)}
 .stats b{font-size:19px}
 
+.ring{--p:0%;width:168px;height:168px;border-radius:84px;background:conic-gradient(var(--accent) 0 var(--p),var(--surface2) var(--p) 100%);display:flex;align-items:center;justify-content:center}
+.ring-in{width:140px;height:140px;border-radius:70px;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.ring-in b{font-size:32px}
+.btn:disabled{opacity:.45}
+
 /* ===== 設定 ===== */
 .themes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .theme-pick{border-radius:12px;border:2px solid transparent;padding:8px;display:flex;flex-direction:column;gap:6px;text-align:left}
@@ -182,14 +187,60 @@ select.inp{font-size:14px;background-image:linear-gradient(45deg,transparent 50%
 <!-- ==================== 作る ==================== -->
 <section class="screen" id="scr-create">
   <div class="bar">
-    <button class="icon-btn" data-go="home" aria-label="戻る"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" class="ic" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
-    <h1>新しいエピソードを作る</h1>
+    <button class="icon-btn" id="cr-back" aria-label="戻る"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" class="ic" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <h1 id="cr-title">新しいエピソードを作る</h1>
   </div>
-  <div class="steps"><span class="on">1 本文を選ぶ</span><span>2 確認</span><span>3 作成・保存</span></div>
-  <div class="card"><div class="stub">段階2で動きます</div><p class="note" style="margin:6px 0 0">本文md（### [0026] ●AI の形）を選ぶと、音声の長さ・費用・作る時間の目安と、登場する声を表示します。</p></div>
-  <div class="stats"><div><small>音声の長さ</small><b>—</b></div><div><small>費用の目安</small><b>—</b></div><div><small>作る時間</small><b>—</b></div></div>
-  <div style="flex:1"></div>
-  <button class="btn primary" data-stub="2">本文ファイルを選ぶ</button>
+  <div class="steps"><span id="st1" class="on">1 本文を選ぶ</span><span id="st2">2 確認</span><span id="st3">3 作成・保存</span></div>
+
+  <!-- 1 本文を選ぶ -->
+  <div id="cr-p1" class="crp" style="display:flex;flex-direction:column;gap:12px;flex:1">
+    <input type="file" id="cr-file" accept=".md,.txt,text/markdown,text/plain" class="sr">
+    <button class="card" id="cr-pick" style="display:flex;align-items:center;gap:12px;text-align:left;width:100%">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke-width="2" style="stroke:var(--accent);flex:none" aria-hidden="true"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/></svg>
+      <span style="flex:1;min-width:0"><span id="cr-fname" style="display:block;font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">本文ファイル（.md）を選ぶ</span><span id="cr-finfo" style="display:block;font-size:12px;color:var(--sub)">「### [0026] ●AI」の形の本文</span></span>
+    </button>
+    <div class="card" id="cr-range" style="display:none;flex-direction:column;gap:8px">
+      <div style="font-size:13px">作る範囲（書き込み番号）</div>
+      <div style="display:flex;align-items:center;gap:8px"><label for="cr-from" class="sr">から</label><select id="cr-from" class="inp"></select><span>〜</span><label for="cr-to" class="sr">まで</label><select id="cr-to" class="inp"></select></div>
+      <div class="note" id="cr-rinfo"></div>
+    </div>
+    <div id="cr-resume"></div>
+    <div style="flex:1"></div>
+    <div class="note" id="cr-p1msg"></div>
+    <button class="btn primary" id="cr-toconfirm" disabled>確認へ（話者の判定・数円）</button>
+  </div>
+
+  <!-- 2 確認 -->
+  <div id="cr-p2" class="crp" style="display:none;flex-direction:column;gap:12px;flex:1">
+    <div class="card" style="display:flex;flex-direction:column;gap:2px"><b id="cf-title" style="font-size:15px"></b><span id="cf-sub" class="note"></span></div>
+    <div class="stats"><div><small>音声の長さ</small><b id="cf-min">—</b></div><div><small>費用の目安</small><b id="cf-yen">—</b></div><div><small>作る時間</small><b id="cf-time">—</b></div></div>
+    <div><div style="font-size:13px;font-weight:700;margin-bottom:6px">登場する声（台詞の数）</div><div id="cf-voices" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
+    <div id="cf-mobwrap"><div style="font-size:13px;font-weight:700;margin-bottom:6px">声のない人物 → 当てる声</div><div class="rows" id="cf-mobs"></div></div>
+    <div class="note" id="cf-notes"></div>
+    <div style="flex:1"></div>
+    <button class="btn primary" id="cf-go">この内容で作る</button>
+  </div>
+
+  <!-- 3 作成・保存 -->
+  <div id="cr-p3" class="crp" style="display:none;flex-direction:column;gap:14px;flex:1">
+    <div style="display:flex;justify-content:center;padding:4px 0">
+      <div class="ring" id="pg-ring"><div class="ring-in"><b id="pg-pct">0%</b><span id="pg-eta" class="note">準備中</span></div></div>
+    </div>
+    <div class="rows" id="pg-steps">
+      <div class="row"><span id="pg-s1">✓ 話者の判定</span><span class="v" id="pg-v1"></span></div>
+      <div class="row"><span id="pg-s2">○ 声を作る</span><span class="v" id="pg-v2"></span></div>
+      <div class="row"><span id="pg-s3">○ m4aに組み立て</span><span class="v" id="pg-v3"></span></div>
+      <div class="row"><span id="pg-s4">○ 1つのファイルにまとめる</span><span class="v" id="pg-v4"></span></div>
+    </div>
+    <div class="card" id="pg-now" style="background:transparent;border:1px solid var(--border)"><div class="note" id="pg-nowwho">いま作っている文</div><div id="pg-nowtx" style="font-size:14px;line-height:1.6;margin-top:2px">—</div></div>
+    <div class="note" id="pg-warn" style="color:var(--warn)">作成中は画面を消さないでください。</div>
+    <div class="note" id="pg-result"></div>
+    <div style="flex:1"></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn outline" id="pg-stop" style="flex:1">中止</button>
+      <button class="btn primary" id="pg-save" style="flex:2" disabled>ファイルに保存</button>
+    </div>
+  </div>
 </section>
 
 <!-- ==================== 設定 ==================== -->
@@ -249,7 +300,7 @@ select.inp{font-size:14px;background-image:linear-gradient(45deg,transparent 50%
     <button class="row" data-go="dict"><span>読み方の登録</span><span class="v" id="v-dict">…</span></button>
   </div>
   <button class="danger" id="btn-clearpos">聴いた位置の記録をすべて消す</button>
-  <p class="note" style="text-align:center;margin:0">ANA 段階1.1（土台）</p>
+  <p class="note" style="text-align:center;margin:0">ANA 段階2（作る）</p>
 </section>
 
 <!-- ==================== キャストと声 ==================== -->
@@ -282,7 +333,7 @@ select.inp{font-size:14px;background-image:linear-gradient(45deg,transparent 50%
 
 <script>
 // ===== PURE START =====
-var ANA_VERSION = 'phase1.1-2026-11-25';
+var ANA_VERSION = 'phase2-2026-11-25';
 
 var DEFAULT_SETTINGS = {
   theme: 'night', fontSize: 'normal', speed: 1.2, apiKey: '',
@@ -441,6 +492,423 @@ function nameColor(hex, theme){
   while (contrast(c, bg) < 4.5 && f > 0.2) { f -= 0.05; c = darken(hex, f); }
   return c;
 }
+// md → [{no, kind:'author'|'ai', text}]
+function parseEpisode(md){
+  var out = [], re = /^### \[(\d+)\]\s*(.*)$/gm, m, heads = [];
+  while ((m = re.exec(md))) heads.push({ no: m[1], label: m[2], start: m.index, bodyStart: re.lastIndex });
+  for (var i = 0; i < heads.length; i++) {
+    var body = md.slice(heads[i].bodyStart, i + 1 < heads.length ? heads[i + 1].start : md.length);
+    out.push({ no: heads[i].no, kind: /作者/.test(heads[i].label) ? 'author' : 'ai', text: body.replace(/^\n+|\s+$/g, '') });
+  }
+  if (!heads.length && md.trim()) out.push({ no: '----', kind: 'ai', text: md.trim() });
+  return out;
+}
+
+// ルビ「漢字（よみ）」→ よみ（行頭の心の声（…）は対象外）
+function fixRuby(s){
+  return String(s).replace(/([一-龯々ヶ]{1,12})[（(]([ぁ-んァ-ヶー・]{1,16})[）)]/g, function(_, base, yomi){ return yomi; });
+}
+
+function splitLong(text, max){
+  max = max || 280;
+  if (text.length <= max) return [text];
+  var sents = text.match(/[^。！？!?]+[。！？!?」』）]*|.+$/g) || [text], out = [], cur = '';
+  sents.forEach(function(s){
+    if (cur && (cur + s).length > max) { out.push(cur); cur = ''; }
+    cur += s;
+  });
+  if (cur) out.push(cur);
+  return out;
+}
+
+function parenDepth(s){ var d = 0; for (var i = 0; i < s.length; i++) { var c = s[i]; if (c === '（') d++; else if (c === '）') d--; } return d; }
+function bracketDepth(s){ var d = 0; for (var i = 0; i < s.length; i++) { var c = s[i]; if (c === '「') d++; else if (c === '」') d--; } return d; }
+
+// 1つの書き込み → 部品
+function segmentMessage(msg){
+  var lines = msg.text.split('\n'), segs = [], narrBuf = [];
+  function flushNarr(){
+    if (!narrBuf.length) return;
+    var t = narrBuf.join('').replace(/\s+/g, ' ').trim();
+    narrBuf = [];
+    if (!t) return;
+    splitLong(t).forEach(function(p){ segs.push({ kind: 'narr', text: p, label: null, from: msg.no, src: msg.kind }); });
+  }
+  for (var i = 0; i < lines.length; i++) {
+    var ln = lines[i].trim();
+    if (!ln) { flushNarr(); continue; }
+    var labT = /^【([^】]+)】\s*（([\s\S]*)）$/.exec(ln);
+    if (labT) { flushNarr(); segs.push({ kind: 'thought', text: labT[2].trim(), label: labT[1].trim(), from: msg.no, src: msg.kind }); continue; }
+    var lab = /^【([^】]+)】\s*(「[\s\S]*)$/.exec(ln);
+    var bare = /^「/.test(ln);
+    if (lab || bare) {
+      var buf = lab ? lab[2] : ln, i0 = i;
+      while (bracketDepth(buf) > 0 && i + 1 < lines.length) { i++; buf += lines[i].trim(); }
+      // ラベルのない行は、行全体が「…」の時だけ台詞（「天輪」の光が…のような強調は地の文）
+      if (!lab && !/」$/.test(buf)) { i = i0; narrBuf.push(ln + (/[。！？!?」』）]$/.test(ln) ? '' : ' ')); if (msg.kind === 'author') flushNarr(); continue; }
+      flushNarr();
+      var inner = buf.replace(/^「/, '').replace(/」\s*$/, '').trim();
+      var isThought = /^（[\s\S]*）$/.test(inner) && parenDepth(inner.slice(1, -1)) === 0;
+      if (isThought) inner = inner.slice(1, -1).trim();
+      segs.push({ kind: isThought ? 'thought' : 'line', text: inner, label: lab ? lab[1].trim() : null, from: msg.no, src: msg.kind });
+      continue;
+    }
+    if (/^（/.test(ln)) {
+      var tb = ln, j0 = i;
+      while (parenDepth(tb) > 0 && i + 1 < lines.length && lines[i + 1].trim()) { i++; tb += lines[i].trim(); }
+      if (/）$/.test(tb) && parenDepth(tb) === 0) {
+        flushNarr();
+        segs.push({ kind: 'thought', text: tb.replace(/^（/, '').replace(/）$/, '').trim(), label: null, from: msg.no, src: msg.kind });
+        continue;
+      }
+      i = j0;
+    }
+    narrBuf.push(ln + (/[。！？!?」』）]$/.test(ln) ? '' : ' '));
+    if (msg.kind === 'author') flushNarr();  // 作者入力は1行ずつが短い文なのでまとめ直す
+  }
+  flushNarr();
+  // 作者入力の地の文は連続をまとめる
+  if (msg.kind === 'author') {
+    var merged = [];
+    segs.forEach(function(s){
+      var last = merged[merged.length - 1];
+      if (last && last.kind === 'narr' && s.kind === 'narr' && (last.text + s.text).length <= 280) last.text += s.text;
+      else merged.push(s);
+    });
+    segs = merged;
+  }
+  return segs;
+}
+
+function normText(s){ return String(s || '').replace(/[\s　、。,.…‥！？!?「」『』（）()〜~ー―－-]/g, ''); }
+
+function similarity(a, b){
+  a = normText(a); b = normText(b);
+  if (!a || !b) return 0;
+  if (a === b) return 1;
+  var n = a.length, m = b.length, prev = new Array(m + 1).fill(0), cur = new Array(m + 1).fill(0);
+  for (var i = 1; i <= n; i++) {
+    for (var j = 1; j <= m; j++) cur[j] = a[i - 1] === b[j - 1] ? prev[j - 1] + 1 : Math.max(prev[j], cur[j - 1]);
+    var t = prev; prev = cur; cur = t;
+  }
+  return 2 * prev[m] / (n + m);
+}
+
+// ② 作者入力の台詞がAI本文にほぼ同じ文で出たら作者入力側を飛ばす
+function markDuplicates(segs, threshold){
+  threshold = threshold || 0.8;
+  segs.forEach(function(s, i){
+    if (s.src !== 'author' || (s.kind !== 'line' && s.kind !== 'thought')) return;
+    for (var j = i + 1; j < segs.length; j++) {
+      var t = segs[j];
+      if (t.src === 'ai' && (t.kind === 'line' || t.kind === 'thought') && similarity(s.text, t.text) >= threshold) {
+        s.skip = '重複（' + t.from + 'に同じ台詞）'; break;
+      }
+    }
+  });
+  return segs;
+}
+
+// 地の文の中の、実際に声に出した「」を台詞として切り出す
+function applyQuotes(segs){
+  var out = [];
+  segs.forEach(function(s){
+    if (s.kind !== 'narr' || !s.quotes || !s.quotes.length) { out.push(s); return; }
+    var rest = s.text, pieces = [];
+    s.quotes.forEach(function(q){
+      var needle = '「' + q.text + '」', k = rest.indexOf(needle);
+      if (k < 0) return;
+      if (k > 0) pieces.push({ kind: 'narr', text: rest.slice(0, k), scene: s.scene });
+      pieces.push({ kind: 'line', text: q.text, speaker: q.speaker, mob: q.mob || null, scene: q.scene, inline: true });
+      rest = rest.slice(k + needle.length);
+    });
+    if (rest.trim()) pieces.push({ kind: 'narr', text: rest, scene: s.scene });
+    pieces.forEach(function(p){ p.from = s.from; p.src = s.src; p.label = null; if (s.r18) p.r18 = true; out.push(p); });
+  });
+  return out;
+}
+
+function composeStyle(base, scene, withScene, keep){
+  base = String(base || '').trim();
+  if (!withScene || !scene) return base;
+  return base + (/[。.]$/.test(base) ? '' : '。') + '今の場面：' + String(scene).trim().replace(/。?$/, '。') + (keep || '');
+}
+
+
+function mergeAnnotations(segs, ann){
+  var byId = {};
+  (ann || []).forEach(function(a){ if (a && typeof a.id === 'number') byId[a.id] = a; });
+  segs.forEach(function(s, i){
+    var a = byId[s._id !== undefined ? s._id : i] || {};
+    if (!s.label && a.speaker) s.speaker = a.speaker;
+    if (a.mob) s.mob = a.mob;
+    s.scene = a.scene || '';
+    if (a.r18 === true) s.r18 = true;
+    if (s.kind === 'narr') s.quotes = Array.isArray(a.quotes) ? a.quotes.filter(function(q){ return q && q.text; }) : [];
+  });
+  return segs;
+}
+
+var R18_BRIDGE = 'ここから少しの間、場面は省略されます。';
+
+// R18の部品は飛ばし、ひと続きの塊の前にナレーターの一文を1つだけ入れる
+function applyR18(segs){
+  var out = [], inRun = false;
+  segs.forEach(function(s){
+    if (s.r18) {
+      if (!inRun) out.push({ kind: 'narr', text: R18_BRIDGE, label: null, from: s.from, src: s.src, bridge: true });
+      inRun = true;
+      s.skip = s.skip || 'R18のため省略';
+      out.push(s);
+      return;
+    }
+    if (!s.skip) inRun = false;
+    out.push(s);
+  });
+  return out;
+}
+
+
+function parseJsonLoose(t){
+  t = String(t || '').trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
+  try { return JSON.parse(t); } catch(e){}
+  var a = t.indexOf('['), b = t.lastIndexOf(']');
+  if (a >= 0 && b > a) return JSON.parse(t.slice(a, b + 1));
+  throw new Error('前処理の結果がJSONとして読めませんでした');
+}
+
+
+// ===== 作る：計画（DOMに依存しない） =====
+var AAC_SR_INDEX = { 96000:0, 88200:1, 64000:2, 48000:3, 44100:4, 32000:5, 24000:6, 22050:7, 16000:8, 12000:9, 11025:10, 8000:11 };
+function audioSpecificConfig(sampleRate, channels){ var sfi = AAC_SR_INDEX[sampleRate]; return new Uint8Array([(2 << 3) | (sfi >> 1), ((sfi & 1) << 7) | (channels << 3)]); }
+function concatU8(list){ var len = 0; list.forEach(function(a){ len += a.length; }); var out = new Uint8Array(len), o = 0; list.forEach(function(a){ out.set(a, o); o += a.length; }); return out; }
+
+// 見出し「# 音の無い世界編（途中から） 本文 [0001]–[0040]」から編名を取る
+function henName(md, fileName){
+  var m = /^#\s+(.+?)\s*(?:本文|\[|$)/m.exec(md || '');
+  var name = m ? m[1].replace(/（.*?）/g, '').trim() : '';
+  if (!name) name = String(fileName || 'エピソード').replace(/\.(md|txt)$/i, '');
+  return name;
+}
+
+// キャスト表から声を引く
+function makeVoiceBook(castData){
+  var byKey = {};
+  function nk(s){ return String(s || '').replace(/[\s　・]/g, ''); }
+  (castData.cast || []).forEach(function(c){
+    [c.name].concat(c.aliases || []).forEach(function(n){ if (n) byKey[nk(n)] = c; });
+    var parts = String(c.name).split(/\s+/);
+    if (parts.length > 1 && !byKey[nk(parts[parts.length - 1])]) byKey[nk(parts[parts.length - 1])] = c;
+  });
+  var mobs = {}; (castData.mobs || []).forEach(function(m){ mobs[m.code] = m; });
+  return {
+    find: function(name){ return name ? (byKey[nk(name)] || null) : null; },
+    mob: function(code){ return mobs[code] || null; },
+    narrator: castData.narrator,
+    fixedMob: castData.fixedMob || {},
+    names: (castData.cast || []).map(function(c){ return c.name + ((c.aliases || []).length ? '（' + c.aliases.join('・') + '）' : ''); }),
+    mobList: (castData.mobs || []).map(function(m){ return m.code + '=' + m.label; })
+  };
+}
+
+// 部品ごとに声を決める。overrides: {名前: 'C3' | 'NARR'}
+function assignVoicesCast(segs, book, overrides){
+  overrides = overrides || {};
+  var mobByName = {};
+  segs.forEach(function(s){
+    s.warn = null;
+    if (s.kind === 'narr') { s.who = 'ナレーター'; s.voice = book.narrator.voiceId; s.base = book.narrator.style; s.mobCode = null; s.nameKey = null; return; }
+    var name = s.label || s.speaker || (s.src === 'author' ? '音無 悠' : null);
+    s.nameKey = name;
+    var c = book.find(name);
+    if (c && !overrides[name]) { s.who = c.name; s.voice = c.voiceId; s.base = c.style; s.mobCode = null; return; }
+    var code = overrides[name] || (name && book.fixedMob[name]) || (name && mobByName[name]) || (book.mob(s.mob) ? s.mob : null);
+    if (code === 'NARR') { s.who = (name || '話者不明') + '（ナレーター）'; s.voice = book.narrator.voiceId; s.base = book.narrator.style; s.mobCode = 'NARR'; return; }
+    var m = code ? book.mob(code) : null;
+    if (m) { if (name) mobByName[name] = code; s.who = name || '名無し'; s.voice = m.voiceId; s.base = m.style; s.mobCode = code; return; }
+    s.who = (name || '話者不明'); s.voice = book.narrator.voiceId; s.base = book.narrator.style; s.mobCode = 'NARR'; s.warn = '話者を決められずナレーターで読む';
+  });
+  return segs;
+}
+
+function buildPromptCast(segs, book){
+  var list = segs.map(function(s){ return { id: s._id, kind: s.kind, src: s.src, label: s.label || null, text: s.text }; });
+  return [
+    'あなたはオーディオブックの演出担当です。小説を部品に分けたリストを渡します。各部品の読み方を決めてJSONだけを返してください。',
+    '',
+    '# 登場人物（声があるキャラ）',
+    book.names.join('、'),
+    '# 声のない人物に当てるモブ声',
+    book.mobList.join('、'),
+    '',
+    '# 決めること',
+    '1. kind が line（「」の台詞）か thought（（）の心の声）の部品: speaker に話者の名前を入れる。label があればそれを使う。src=author の台詞は基本的に音無 悠。登場人物リストにいない人物なら、mob に最も合うモブ声の番号（C1〜C20）を入れる。',
+    '2. kind が narr（地の文）の部品: 文中の「」のうち、登場人物が実際に声に出した言葉だけを quotes に入れる（{"text":「」の中身を一字一句そのまま,"speaker":名前,"mob":番号またはnull}）。名称・強調・引用語のカギ括弧（例「天輪」「作戦会議」）は入れない。無ければ空配列。',
+    '3. すべての部品: 性的な行為や性的な身体描写を含む部品は r18 を true にする（キスや抱擁だけなら false）。',
+    '',
+    '# 出力形式（この配列だけ）',
+    '[{"id":0,"speaker":null,"mob":null,"quotes":[],"r18":false}, ...]',
+    '',
+    '# 部品リスト',
+    JSON.stringify(list)
+  ].join('\n');
+}
+
+// 読み上げる部品の並びと、各部品のあとに入れる間（秒）
+function planSpoken(segs, gaps, dict){
+  var spoken = segs.filter(function(s){ return !s.skip; });
+  return spoken.map(function(s, i){
+    var next = spoken[i + 1];
+    var g = s.kind === 'narr' ? gaps.narr : gaps.line;
+    if (next && next.who !== s.who) g += gaps.change;
+    return { i: i, kind: s.bridge ? 'bridge' : s.kind, who: s.who, voice: s.voice, style: s.base, from: s.from, src: s.src,
+             text: s.text, ttsText: applyReadings(s.text, dict), gap: Math.round(g * 1000) / 1000, warn: s.warn || null };
+  });
+}
+
+// 目安（試作の実績から）。字数→分、分→円（2027年からは倍）、分→作る時間
+function estimate(chars, now){
+  var min = chars * 3.7 / 1000;
+  var after = (now || new Date()) >= new Date('2027-01-01T00:00:00Z');
+  return { minutes: min, yen: min * (after ? 4.3 : 2.15), makeMinutes: Math.max(1, min * 0.15) };
+}
+
+function hashStr(s){ var h = 0x811c9dc5; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return ('0000000' + h.toString(16)).slice(-8); }
+function jobIdOf(meta, plan){
+  return hashStr(JSON.stringify([meta.fileName, meta.from, meta.to, meta.ttsModel, plan.map(function(p){ return [p.voice, p.style, p.ttsText, p.gap]; })]));
+}
+
+// 部品の音（フレーム数）から開始時刻と目次を作る
+function buildTimeline(plan, partFrames, sampleRate){
+  var t = 0, segments = [], chapters = [], seen = {};
+  plan.forEach(function(p, i){
+    var n = partFrames[i];
+    if (!n) return;
+    var d = n * 1024 / sampleRate;
+    var key = p.from + '|' + p.src;
+    if (!seen[key]) { seen[key] = true; chapters.push({ from: p.from, src: p.src, t: Math.round(t * 1000) / 1000 }); }
+    segments.push({ i: segments.length, t: Math.round(t * 1000) / 1000, d: Math.round(d * 1000) / 1000, kind: p.kind, who: p.who, from: p.from, src: p.src, text: p.text });
+    t += d;
+  });
+  return { segments: segments, chapters: chapters, duration: Math.round(t * 1000) / 1000 };
+}
+
+function safeFileName(s){ return String(s).replace(/[\\/:*?"<>|\s]+/g, '_').replace(/_+/g, '_').slice(0, 80); }
+
+// 無圧縮zip
+var CRC_TABLE = (function(){ var t = new Uint32Array(256); for (var n = 0; n < 256; n++) { var c = n; for (var k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); t[n] = c >>> 0; } return t; })();
+function crc32(u8, c){ c = (c === undefined ? 0xFFFFFFFF : c); for (var i = 0; i < u8.length; i++) c = CRC_TABLE[(c ^ u8[i]) & 0xFF] ^ (c >>> 8); return c; }
+function crc32Parts(parts){ var c = 0xFFFFFFFF; parts.forEach(function(p){ c = crc32(p, c); }); return (c ^ 0xFFFFFFFF) >>> 0; }
+// files: [{name, parts:[Uint8Array...]}] → Blobに渡せる配列
+function zipStoreParts(files){
+  var out = [], central = [], offset = 0, enc = new TextEncoder();
+  files.forEach(function(f){
+    var name = enc.encode(f.name), crc = crc32Parts(f.parts), size = 0; f.parts.forEach(function(p){ size += p.length; });
+    var lh = new Uint8Array(30 + name.length), v = new DataView(lh.buffer);
+    v.setUint32(0, 0x04034b50, true); v.setUint16(4, 20, true); v.setUint16(6, 0x0800, true); v.setUint16(8, 0, true);
+    v.setUint16(12, 0x21, true); v.setUint32(14, crc, true); v.setUint32(18, size, true); v.setUint32(22, size, true); v.setUint16(26, name.length, true);
+    lh.set(name, 30);
+    var ch = new Uint8Array(46 + name.length), w = new DataView(ch.buffer);
+    w.setUint32(0, 0x02014b50, true); w.setUint16(4, 20, true); w.setUint16(6, 20, true); w.setUint16(8, 0x0800, true);
+    w.setUint16(14, 0x21, true); w.setUint32(16, crc, true); w.setUint32(20, size, true); w.setUint32(24, size, true);
+    w.setUint16(28, name.length, true); w.setUint32(42, offset, true); ch.set(name, 46);
+    out.push(lh); f.parts.forEach(function(p){ out.push(p); }); central.push(ch);
+    offset += lh.length + size;
+  });
+  var cd = 0; central.forEach(function(c){ cd += c.length; });
+  var eo = new Uint8Array(22), e = new DataView(eo.buffer);
+  e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, cd, true); e.setUint32(16, offset, true);
+  return out.concat(central, [eo]);
+}
+
+function parseWav(u8){
+  var dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+  if (u8.length < 12 || dv.getUint32(0, false) !== 0x52494646) return null;
+  var p = 12, sr = 24000, data = null;
+  while (p + 8 <= u8.length) {
+    var id = dv.getUint32(p, false), sz = dv.getUint32(p + 4, true);
+    if (id === 0x666d7420) sr = dv.getUint32(p + 12, true);
+    if (id === 0x64617461) { data = u8.subarray(p + 8, Math.min(u8.length, p + 8 + sz)); break; }
+    p += 8 + sz + (sz & 1);
+  }
+  return data ? { sampleRate: sr, pcm: data } : null;
+}
+function pcm16ToF32(u8, extraSamples){
+  var n = Math.floor(u8.length / 2), out = new Float32Array(n + (extraSamples || 0)), dv = new DataView(u8.buffer, u8.byteOffset, n * 2);
+  for (var i = 0; i < n; i++) out[i] = dv.getInt16(i * 2, true) / 32768;
+  return out;
+}
+// 部品の保存形（フレームを1つにまとめ、長さの一覧を添える）
+function packFrames(frames){ return { sizes: frames.map(function(f){ return f.length; }), data: concatU8(frames) }; }
+function unpackFrames(p){ var out = [], o = 0; p.sizes.forEach(function(n){ out.push(p.data.subarray(o, o + n)); o += n; }); return out; }
+
+// ===== m4a（MP4の器）を自前で組み立てる =====
+// frames: 生AACフレーム（ADTSヘッダなし）の配列。1フレーム=1024サンプル
+function m4aBox(type, parts){
+  var len = 8; parts.forEach(function(p){ len += p.length; });
+  var out = new Uint8Array(len), dv = new DataView(out.buffer);
+  dv.setUint32(0, len);
+  for (var i = 0; i < 4; i++) out[4 + i] = type.charCodeAt(i);
+  var o = 8; parts.forEach(function(p){ out.set(p, o); o += p.length; });
+  return out;
+}
+function m4aU32(arr){ var b = new Uint8Array(arr.length * 4), dv = new DataView(b.buffer); arr.forEach(function(v, i){ dv.setUint32(i * 4, v >>> 0); }); return b; }
+function m4aU16(arr){ var b = new Uint8Array(arr.length * 2), dv = new DataView(b.buffer); arr.forEach(function(v, i){ dv.setUint16(i * 2, v); }); return b; }
+function m4aBytes(arr){ return new Uint8Array(arr); }
+function m4aStr(s){ var b = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) b[i] = s.charCodeAt(i); return b; }
+function m4aFull(type, version, flags, parts){ return m4aBox(type, [m4aBytes([version, (flags >> 16) & 255, (flags >> 8) & 255, flags & 255])].concat(parts)); }
+function m4aDesc(tag, payload){ var l = payload.length; var h = m4aBytes([tag, 0x80 | ((l >> 21) & 0x7f), 0x80 | ((l >> 14) & 0x7f), 0x80 | ((l >> 7) & 0x7f), l & 0x7f]); var o = new Uint8Array(h.length + l); o.set(h); o.set(payload, h.length); return o; }
+var M4A_MATRIX = m4aU32([0x00010000, 0, 0, 0, 0x00010000, 0, 0, 0, 0x40000000]);
+
+function buildM4a(frames, sampleRate, channels, bitrate){
+  channels = channels || 1; bitrate = bitrate || 64000;
+  var n = frames.length, dur = n * 1024, total = 0, maxSize = 0;
+  frames.forEach(function(f){ total += f.length; if (f.length > maxSize) maxSize = f.length; });
+  var asc = audioSpecificConfig(sampleRate, channels);
+  function moov(chunkOffset){
+    var esds = m4aFull('esds', 0, 0, [m4aDesc(3, (function(){
+      var dcd = m4aDesc(4, (function(){
+        var head = new Uint8Array(13), dv = new DataView(head.buffer);
+        head[0] = 0x40; head[1] = 0x15; head[2] = (maxSize >> 16) & 255; head[3] = (maxSize >> 8) & 255; head[4] = maxSize & 255;
+        dv.setUint32(5, bitrate); dv.setUint32(9, bitrate);
+        var dsi = m4aDesc(5, asc), o = new Uint8Array(head.length + dsi.length); o.set(head); o.set(dsi, head.length); return o;
+      })());
+      var sl = m4aDesc(6, m4aBytes([2]));
+      var es = new Uint8Array(3 + dcd.length + sl.length); es[0] = 0; es[1] = 1; es[2] = 0; es.set(dcd, 3); es.set(sl, 3 + dcd.length); return es;
+    })())]);
+    var mp4a = m4aBox('mp4a', [m4aBytes([0, 0, 0, 0, 0, 0]), m4aU16([1]), m4aU32([0, 0]), m4aU16([channels, 16, 0, 0]), m4aU32([sampleRate << 16 >>> 0]), esds]);
+    var stsd = m4aFull('stsd', 0, 0, [m4aU32([1]), mp4a]);
+    var stts = m4aFull('stts', 0, 0, [m4aU32([1, n, 1024])]);
+    var stsc = m4aFull('stsc', 0, 0, [m4aU32([1, 1, n, 1])]);
+    var stsz = m4aFull('stsz', 0, 0, [m4aU32([0, n]), m4aU32(frames.map(function(f){ return f.length; }))]);
+    var stco = m4aFull('stco', 0, 0, [m4aU32([1, chunkOffset])]);
+    var stbl = m4aBox('stbl', [stsd, stts, stsc, stsz, stco]);
+    var dinf = m4aBox('dinf', [m4aFull('dref', 0, 0, [m4aU32([1]), m4aFull('url ', 0, 1, [])])]);
+    var minf = m4aBox('minf', [m4aFull('smhd', 0, 0, [m4aU32([0])]), dinf, stbl]);
+    var hdlr = m4aFull('hdlr', 0, 0, [m4aU32([0]), m4aStr('soun'), m4aU32([0, 0, 0]), m4aStr('SoundHandler\0')]);
+    var mdhd = m4aFull('mdhd', 0, 0, [m4aU32([0, 0, sampleRate, dur]), m4aU16([0x55c4, 0])]); // 言語 und
+    var mdia = m4aBox('mdia', [mdhd, hdlr, minf]);
+    var tkhd = m4aFull('tkhd', 0, 3, [m4aU32([0, 0, 1, 0, dur, 0, 0]), m4aU16([0, 0, 0x0100, 0]), M4A_MATRIX, m4aU32([0, 0])]);
+    var trak = m4aBox('trak', [tkhd, mdia]);
+    var mvhd = m4aFull('mvhd', 0, 0, [m4aU32([0, 0, sampleRate, dur, 0x00010000]), m4aU16([0x0100, 0]), m4aU32([0, 0]), M4A_MATRIX, m4aU32([0, 0, 0, 0, 0, 0, 2])]);
+    return m4aBox('moov', [mvhd, trak]);
+  }
+  var ftyp = m4aBox('ftyp', [m4aStr('M4A '), m4aU32([0]), m4aStr('M4A '), m4aStr('mp42'), m4aStr('isom')]);
+  var probe = moov(0);
+  var offset = ftyp.length + probe.length + 8;
+  var mv = moov(offset);
+  var mdatHead = new Uint8Array(8), dv = new DataView(mdatHead.buffer);
+  dv.setUint32(0, 8 + total); mdatHead.set(m4aStr('mdat'), 4);
+  var parts = [ftyp, mv, mdatHead].concat(frames);
+  return parts;   // Blobに渡せる配列（全体は concat で1つにできる）
+}
+
+// ADTSヘッダの付いたフレームなら外す（7バイト／CRCありは9バイト）
+function stripAdts(u8){
+  if (u8.length > 7 && u8[0] === 0xFF && (u8[1] & 0xF6) === 0xF0) return u8.subarray((u8[1] & 1) ? 7 : 9);
+  return u8;
+}
+
 function initialOf(c){
   var parts = String(c.name || '').split(/\s+/);
   return parts.length > 1 ? String((c.aliases && c.aliases[0]) || parts[parts.length - 1])[0] : String(c.name || '?')[0];
@@ -488,7 +956,17 @@ var Store = (function(){
   function saveSettings(s){ return lsSet('ana_settings', JSON.stringify(s)); }
   function getPositions(){ try { return JSON.parse(lsGet('ana_pos') || '{}') || {}; } catch(e){ return {}; } }
   function clearPositions(){ try { localStorage.removeItem('ana_pos'); } catch(e){} }
-  return { get: get, set: set, getSettings: getSettings, saveSettings: saveSettings, getPositions: getPositions, clearPositions: clearPositions };
+  async function keys(){
+    var db = await open();
+    if (!db) return Object.keys(mem);
+    return new Promise(function(res){ var rq = db.transaction(ST, 'readonly').objectStore(ST).getAllKeys(); rq.onsuccess = function(){ res((rq.result || []).map(String)); }; rq.onerror = function(){ res([]); }; });
+  }
+  async function del(k){
+    var db = await open();
+    if (!db) { delete mem[k]; try { localStorage.removeItem('ana_kv_' + k); } catch(e){} return; }
+    return new Promise(function(res){ var tx = db.transaction(ST, 'readwrite'); tx.objectStore(ST).delete(k); tx.oncomplete = function(){ res(); }; tx.onerror = function(){ res(); }; });
+  }
+  return { keys: keys, del: del, get: get, set: set, getSettings: getSettings, saveSettings: saveSettings, getPositions: getPositions, clearPositions: clearPositions };
 })();
 
 // ===== アプリ =====
@@ -527,6 +1005,7 @@ var App = (function(){
     if (name === 'cast') renderCast();
     if (name === 'dict') renderDict();
     if (name === 'player') renderLyrics();
+    if (name === 'create' && window.Create) Create.onShow();
   }
 
   // ---- ホーム ----
@@ -642,6 +1121,7 @@ var App = (function(){
       var s = e.target.closest('[data-stub]'); if (s) { toast('段階' + s.getAttribute('data-stub') + 'で動きます'); }
     });
     bindSettings();
+    Create.init();
     $('cast-q').oninput = renderCast;
     $('btn-resetcast').onclick = async function(){ if (confirm('キャストを初期状態に戻します。編集した声IDや指示は消えます。よろしいですか？')) { CAST = buildSeedCast(); await Store.set('cast', CAST); renderCast(); toast('初期状態に戻しました'); } };
     $('btn-resetdict').onclick = async function(){ if (confirm('読み方を初期状態に戻します。追加した登録は消えます。よろしいですか？')) { DICT = buildSeedDict(); await Store.set('dict', DICT); renderDict(); toast('初期状態に戻しました'); } };
@@ -652,7 +1132,373 @@ var App = (function(){
     go(location.hash.slice(1) || 'home');
     App.ready = true;
   }
-  return { init: init, go: go, get settings(){ return S; }, get cast(){ return CAST; }, get dict(){ return DICT; }, ready: false };
+  return { init: init, go: go, toast: toast, esc: esc, get settings(){ return S; }, get cast(){ return CAST; }, get dict(){ return DICT; }, ready: false };
+})();
+
+
+// ===== 作る（画面と処理） =====
+var Create = (function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var C = { text: '', fileName: '', msgs: [], hen: '', segs: [], overrides: {}, plan: [], jobId: '', running: false, stop: false, result: null, usage: { tin: 0, tout: 0, audioSec: 0 } };
+  var RATE = 24000, BITRATE = 64000, PARALLEL = 3;
+
+  function toast(m){ App.toast(m); }
+  function esc(s){ return App.esc(s); }
+  function step(n){
+    [1, 2, 3].forEach(function(k){ $('cr-p' + k).style.display = k === n ? 'flex' : 'none'; $('st' + k).classList.toggle('on', k === n); });
+    C.step = n;
+  }
+  function S(){ return App.settings; }
+
+  // ---------- 1 本文を選ぶ ----------
+  function onFile(e){
+    var f = e.target.files && e.target.files[0]; if (!f) return;
+    var fr = new FileReader();
+    fr.onload = function(){
+      C.text = String(fr.result || ''); C.fileName = f.name;
+      C.msgs = parseEpisode(C.text).filter(function(m){ return m.text.trim(); });
+      C.hen = henName(C.text, f.name);
+      $('cr-fname').textContent = f.name;
+      if (!C.msgs.length) { $('cr-finfo').textContent = '書き込みが見つかりません'; $('cr-toconfirm').disabled = true; return; }
+      var opts = C.msgs.map(function(m, i){ return '<option value="' + i + '">' + esc(m.no) + '（' + (m.kind === 'author' ? '作者' : 'AI') + '）</option>'; }).join('');
+      $('cr-from').innerHTML = opts; $('cr-to').innerHTML = opts;
+      $('cr-from').value = '0'; $('cr-to').value = String(C.msgs.length - 1);
+      $('cr-range').style.display = 'flex';
+      updateRange();
+      $('cr-toconfirm').disabled = false;
+    };
+    fr.onerror = function(){ toast('ファイルを読めませんでした'); };
+    fr.readAsText(f);
+  }
+  function range(){
+    var a = +$('cr-from').value, b = +$('cr-to').value;
+    if (b < a) { var t = a; a = b; b = t; }
+    return { a: a, b: b, msgs: C.msgs.slice(a, b + 1) };
+  }
+  function updateRange(){
+    var r = range(), chars = 0;
+    r.msgs.forEach(function(m){ chars += m.text.replace(/\s/g, '').length; });
+    var e = estimate(chars);
+    $('cr-finfo').textContent = C.hen + ' ・ 全' + C.msgs.length + '件';
+    $('cr-rinfo').textContent = r.msgs.length + '件 ・ 約' + chars.toLocaleString() + '字 ・ 音声 約' + Math.round(e.minutes) + '分 ・ 約' + Math.round(e.yen) + '円（話者判定の前のおおよそ）';
+  }
+
+  // ---------- 2 確認（話者の判定まで） ----------
+  async function annotate(list, book){
+    var key = S().apiKey;
+    var res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(S().textModel) + ':generateContent', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+      body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: buildPromptCast(list, book) }] }], generationConfig: { responseMimeType: 'application/json', temperature: 0.3 } }) });
+    var j = await res.json().catch(function(){ return null; });
+    if (!res.ok) { var er = new Error('HTTP ' + res.status + ' ' + (j && j.error && j.error.message || '')); er.status = res.status; throw er; }
+    var u = j.usageMetadata || {}; C.usage.tin += u.promptTokenCount || 0; C.usage.tout += (u.candidatesTokenCount || 0) + (u.thoughtsTokenCount || 0);
+    var parts = (j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts) || [];
+    var txt = parts.map(function(p){ return p.text || ''; }).join('');
+    var reason = (j.promptFeedback && j.promptFeedback.blockReason) || (j.candidates && j.candidates[0] && j.candidates[0].finishReason) || '';
+    if (!txt) { var e = new Error('話者判定の応答が空（' + (reason || '理由不明') + '）'); e.blocked = /SAFETY|PROHIBITED|BLOCK|OTHER/i.test(reason); throw e; }
+    return parseJsonLoose(txt);
+  }
+  async function pool(jobs, n, onDone){
+    var i = 0, done = 0;
+    async function worker(){ while (i < jobs.length && !C.stop) { var k = i++; await jobs[k](); done++; if (onDone) onDone(done, jobs.length); } }
+    var ws = []; for (var w = 0; w < n; w++) ws.push(worker());
+    await Promise.all(ws);
+  }
+  async function toConfirm(){
+    if (!S().apiKey) { toast('設定でAPIキーを入れてください'); return; }
+    var r = range(); C.range = r;
+    $('cr-toconfirm').disabled = true; C.stop = false; C.usage = { tin: 0, tout: 0, audioSec: 0 };
+    try {
+      var raw = [];
+      r.msgs.forEach(function(m){ raw = raw.concat(segmentMessage({ no: m.no, kind: m.kind, text: fixRuby(m.text) })); });
+      markDuplicates(raw);
+      raw.forEach(function(s, i){ s._id = i; });
+      var book = makeVoiceBook(App.cast);
+      var groups = [], key = null;
+      raw.forEach(function(s){ if (s.from + s.src !== key) { groups.push([]); key = s.from + s.src; } groups[groups.length - 1].push(s); });
+      var all = [], blocked = [];
+      $('cr-p1msg').textContent = '話者を判定しています… 0/' + groups.length;
+      await pool(groups.map(function(g){ return async function(){
+        for (var tries = 0; tries < 2; tries++) {
+          try { var a = await annotate(g, book); all = all.concat(a); return; }
+          catch(e){ if (e.blocked) { g.forEach(function(s){ s.r18 = true; }); blocked.push(g[0].from); return; } if (tries === 1) throw e; if (e.status === 429) await new Promise(function(res){ setTimeout(res, 3000); }); }
+        }
+      }; }), PARALLEL, function(d, n){ $('cr-p1msg').textContent = '話者を判定しています… ' + d + '/' + n; });
+      mergeAnnotations(raw, all);
+      C.segs = applyR18(applyQuotes(raw));
+      C.blocked = blocked; C.overrides = {}; C.book = book;
+      assignVoicesCast(C.segs, book, C.overrides);
+      $('cr-p1msg').textContent = '';
+      renderConfirm();
+      step(2);
+    } catch(e){
+      $('cr-p1msg').textContent = 'エラー：' + e.message;
+    }
+    $('cr-toconfirm').disabled = false;
+  }
+  function renderConfirm(){
+    assignVoicesCast(C.segs, C.book, C.overrides);
+    C.plan = planSpoken(C.segs, { narr: S().gapNarr, line: S().gapLine, change: S().gapChange }, App.dict);
+    var chars = 0; C.plan.forEach(function(p){ chars += p.ttsText.replace(/\s/g, '').length; });
+    var e = estimate(chars);
+    var r = C.range;
+    C.title = C.hen + ' ' + r.msgs[0].no + '–' + r.msgs[r.msgs.length - 1].no;
+    $('cf-title').textContent = C.title;
+    $('cf-sub').textContent = C.fileName + ' ・ ' + r.msgs.length + '件 ・ 読む字数 約' + chars.toLocaleString() + '字';
+    $('cf-min').textContent = '約' + Math.max(1, Math.round(e.minutes)) + '分';
+    $('cf-yen').textContent = '約' + Math.max(1, Math.round(e.yen)) + '円';
+    $('cf-time').textContent = '約' + Math.max(1, Math.round(e.makeMinutes)) + '分';
+    var counts = {};
+    C.plan.forEach(function(p){ if (p.kind !== 'narr' && p.kind !== 'bridge') counts[p.who] = (counts[p.who] || 0) + 1; });
+    var narr = C.plan.filter(function(p){ return p.kind === 'narr' || p.kind === 'bridge'; }).length;
+    $('cf-voices').innerHTML = '<span class="chip" style="display:inline-flex;align-items:center">ナレーター ' + narr + '</span>' +
+      Object.keys(counts).sort(function(a, b){ return counts[b] - counts[a]; }).map(function(k){ return '<span class="chip" style="display:inline-flex;align-items:center">' + esc(k) + ' ' + counts[k] + '</span>'; }).join('');
+    // 声のない人物
+    var unknown = {};
+    C.segs.forEach(function(s){ if (!s.skip && s.kind !== 'narr' && s.mobCode && s.nameKey) unknown[s.nameKey] = s.mobCode; });
+    var names = Object.keys(unknown);
+    $('cf-mobwrap').style.display = names.length ? 'block' : 'none';
+    var mobOpts = (App.cast.mobs || []).map(function(m){ return '<option value="' + m.code + '">' + m.code + ' ' + esc(m.label) + '</option>'; }).join('') + '<option value="NARR">ナレーターが読む</option>';
+    $('cf-mobs').innerHTML = names.map(function(n, i){
+      return '<div class="row"><label for="cf-m' + i + '">' + esc(n) + '</label><select id="cf-m' + i + '" class="inp" data-name="' + esc(n) + '" style="width:auto;max-width:60%;height:36px;font-size:12px">' + mobOpts + '</select></div>';
+    }).join('');
+    names.forEach(function(n, i){ var sel = $('cf-m' + i); sel.value = unknown[n]; sel.onchange = function(){ C.overrides[n] = sel.value; renderConfirm(); }; });
+    var dup = C.segs.filter(function(s){ return s.skip && /重複/.test(s.skip); }).length;
+    var r18 = C.segs.filter(function(s){ return s.r18; }).length;
+    var warn = C.plan.filter(function(p){ return p.warn; }).length;
+    $('cf-notes').innerHTML = '作者入力の台詞のうち AI本文と重なる ' + dup + 'つ は読みません。' +
+      (r18 ? '性的な場面 ' + r18 + '部品 を省略します。' : '') + (C.blocked && C.blocked.length ? '（判定を断られた書き込み: ' + esc(C.blocked.join(',')) + '）' : '') +
+      (warn ? '<br>話者を決められなかった台詞 ' + warn + 'つ はナレーターが読みます。' : '');
+  }
+
+  // ---------- 3 作成 ----------
+  var wakeLock = null;
+  async function keepAwake(on){
+    try {
+      if (on && 'wakeLock' in navigator && !wakeLock) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', function(){ wakeLock = null; }); }
+      if (!on && wakeLock) { await wakeLock.release(); wakeLock = null; }
+      $('pg-warn').textContent = (on ? (wakeLock ? '画面は自動で点いたままにしています。' : '') : '') + '作成中は画面を消さず、アプリを切り替えないでください。';
+    } catch(e){ $('pg-warn').textContent = '作成中は画面を消さず、アプリを切り替えないでください。'; }
+  }
+  document.addEventListener('visibilitychange', function(){ if (C.running && document.visibilityState === 'visible') keepAwake(true); });
+
+  function b64ToU8(b64){ var s = atob(b64), u = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; }
+  async function tts(voice, text, style){
+    var part = { text: text }; if (style) part.speech_metadata = { style: style };
+    var res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(S().ttsModel) + ':generateContent', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': S().apiKey },
+      body: JSON.stringify({ contents: [{ role: 'user', parts: [part] }], generationConfig: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { voice: voice } } } }) });
+    var j = await res.json().catch(function(){ return null; });
+    if (!res.ok) { var er = new Error('HTTP ' + res.status + ' ' + (j && j.error && j.error.message || '')); er.status = res.status; throw er; }
+    var parts = (j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts) || [];
+    var p = parts.find(function(x){ return x.inlineData && x.inlineData.data; });
+    if (!p) throw new Error('音声なし（' + ((j.candidates && j.candidates[0] && j.candidates[0].finishReason) || (j.promptFeedback && j.promptFeedback.blockReason) || '理由不明') + '）');
+    var u8 = b64ToU8(p.inlineData.data), w = parseWav(u8);
+    var out = w || { sampleRate: (/rate=(\d+)/.exec(p.inlineData.mimeType || '') || [0, 24000])[1] * 1, pcm: u8 };
+    if (out.sampleRate !== RATE) throw new Error('想定外の周波数 ' + out.sampleRate);
+    C.usage.audioSec += out.pcm.length / 2 / RATE;
+    return out.pcm;
+  }
+  async function ttsSafe(p){
+    try { return { pcm: await tts(p.voice, p.ttsText, p.style) }; } catch(e1){
+      if (C.stop) throw e1;
+      if (e1.status === 429) await new Promise(function(r){ setTimeout(r, 3000); });
+      try { return { pcm: await tts(p.voice, p.ttsText, p.style) }; } catch(e2){
+        var nar = App.cast.narrator;
+        try { return { pcm: await tts(nar.voiceId, p.ttsText, nar.style), note: 'ナレーター代読（' + e2.message + '）' }; }
+        catch(e3){ return { pcm: null, note: '飛ばした（' + e3.message + '）' }; }
+      }
+    }
+  }
+
+  // 生AACフレームに圧縮（AudioEncoder）
+  var encMode = null;
+  async function pickEncMode(){
+    if (encMode) return encMode;
+    if (typeof AudioEncoder === 'undefined') throw new Error('この端末は音声の圧縮（AudioEncoder）に対応していません');
+    var base = { codec: 'mp4a.40.2', sampleRate: RATE, numberOfChannels: 1, bitrate: BITRATE };
+    var a = await AudioEncoder.isConfigSupported(Object.assign({}, base, { aac: { format: 'aac' } })).catch(function(){ return { supported: false }; });
+    if (a.supported) return (encMode = 'aac');
+    var b = await AudioEncoder.isConfigSupported(base).catch(function(){ return { supported: false }; });
+    if (b.supported) return (encMode = 'default');
+    throw new Error('AAC 24kHz の圧縮に対応していません');
+  }
+  async function encode(f32){
+    var mode = await pickEncMode();
+    var frames = [], err = null;
+    var enc = new AudioEncoder({ output: function(chunk){ var b = new Uint8Array(chunk.byteLength); chunk.copyTo(b); frames.push(stripAdts(b)); }, error: function(e){ err = e; } });
+    var cfg = { codec: 'mp4a.40.2', sampleRate: RATE, numberOfChannels: 1, bitrate: BITRATE }; if (mode === 'aac') cfg.aac = { format: 'aac' };
+    enc.configure(cfg);
+    var stepN = RATE / 10, done = 0;
+    while (done < f32.length) {
+      if (err) throw err;
+      var n = Math.min(stepN, f32.length - done);
+      var ad = new AudioData({ format: 'f32-planar', sampleRate: RATE, numberOfFrames: n, numberOfChannels: 1, timestamp: Math.round(done * 1e6 / RATE), data: f32.subarray(done, done + n) });
+      enc.encode(ad); ad.close(); done += n;
+      while (enc.encodeQueueSize > 20) await new Promise(function(r){ setTimeout(r, 0); });
+    }
+    await enc.flush(); enc.close();
+    if (err) throw err;
+    return frames;
+  }
+
+  function setPct(done, total){
+    var pct = total ? Math.floor(done / total * 100) : 0;
+    $('pg-pct').textContent = pct + '%';
+    $('pg-ring').style.setProperty('--p', pct + '%');
+    if (C.t0 && done > C.doneAtStart) {
+      var per = (performance.now() - C.t0) / (done - C.doneAtStart), left = (total - done) * per / 1000;
+      $('pg-eta').textContent = '残り 約' + Math.max(1, Math.round(left / 60)) + '分';
+    }
+  }
+  function partKey(i){ return 'part:' + C.jobId + ':' + i; }
+
+  async function cleanupOtherJobs(){
+    var keys = await Store.keys();
+    var olds = keys.filter(function(k){ return /^part:/.test(k) && k.indexOf('part:' + C.jobId + ':') !== 0; });
+    for (var i = 0; i < olds.length; i++) await Store.del(olds[i]);
+  }
+  async function countCached(){
+    var keys = await Store.keys(), n = 0, pre = 'part:' + C.jobId + ':';
+    keys.forEach(function(k){ if (k.indexOf(pre) === 0) n++; });
+    return n;
+  }
+
+  async function startNew(){
+    C.jobId = jobIdOf({ fileName: C.fileName, from: C.range.a, to: C.range.b, ttsModel: S().ttsModel }, C.plan);
+    C.job = { jobId: C.jobId, plan: C.plan, title: C.title, fileName: C.fileName,
+              omittedR18: C.segs.filter(function(s){ return s.r18; }).length,
+              duplicates: C.segs.filter(function(s){ return s.skip && /重複/.test(s.skip); }).length,
+              segCount: C.segs.length, usage: C.usage, at: new Date().toISOString() };
+    await Store.set('job:last', C.job);
+    run();
+  }
+  async function resumeSaved(){
+    var j = await Store.get('job:last'); if (!j) return;
+    C.job = j; C.jobId = j.jobId; C.plan = j.plan; C.title = j.title; C.fileName = j.fileName;
+    C.usage = j.usage || { tin: 0, tout: 0, audioSec: 0 };
+    run();
+  }
+  async function showResume(){
+    var box = $('cr-resume'); box.innerHTML = '';
+    var j = await Store.get('job:last'); if (!j || !j.plan) return;
+    C.jobId = j.jobId; var n = await countCached();
+    box.innerHTML = '<div class="card" style="display:flex;flex-direction:column;gap:8px"><div style="font-size:12px;color:var(--accent);font-weight:700">前回の作りかけ</div><div style="font-size:14px;font-weight:700">' + esc(j.title) + '</div><div class="note">作った部品 ' + n + ' / ' + j.plan.length + '（話者の判定はやり直しません）</div><div style="display:flex;gap:8px"><button class="btn primary small" id="cr-resgo">' + (n >= j.plan.length ? 'まとめ直す' : '続きから作る') + '</button><button class="btn outline small" id="cr-resdel">破棄する</button></div></div>';
+    $('cr-resgo').onclick = resumeSaved;
+    $('cr-resdel').onclick = async function(){ if (!confirm('作りかけを破棄しますか？')) return; var keys = await Store.keys(); for (var i = 0; i < keys.length; i++) if (/^part:/.test(keys[i])) await Store.del(keys[i]); await Store.del('job:last'); showResume(); };
+  }
+
+  async function run(){
+    step(3); C.running = true; C.stop = false; C.result = null; C.notes = [];
+    $('pg-save').disabled = true; $('pg-stop').textContent = '中止'; $('pg-result').textContent = '';
+    $('pg-v1').textContent = C.job.segCount + '部品'; $('pg-s2').textContent = '◌ 声を作る'; $('pg-s3').textContent = '○ m4aに組み立て'; $('pg-s4').textContent = '○ 1つのファイルにまとめる';
+    await keepAwake(true);
+    try {
+      await cleanupOtherJobs();
+      var total = C.plan.length, have = {};
+      var keys = await Store.keys(); keys.forEach(function(k){ var m = /^part:([^:]+):(\d+)$/.exec(k); if (m && m[1] === C.jobId) have[+m[2]] = true; });
+      var done = Object.keys(have).length; C.doneAtStart = done; C.t0 = performance.now();
+      setPct(done, total); $('pg-v2').textContent = done + ' / ' + total;
+      var encQ = Promise.resolve();
+      var jobs = C.plan.map(function(p, i){ return async function(){
+        if (have[i] || C.stop) return;
+        $('pg-nowwho').textContent = 'いま作っている文 ・ ' + p.from + ' ' + p.who;
+        $('pg-nowtx').textContent = p.text.length > 80 ? p.text.slice(0, 80) + '…' : p.text;
+        var r = await ttsSafe(p);
+        var note = r.note ? p.from + ' ' + p.who + '：' + r.note : null;
+        var f32 = r.pcm ? pcm16ToF32(r.pcm, Math.round(p.gap * RATE)) : null;
+        encQ = encQ.then(async function(){
+          var frames = f32 ? await encode(f32) : [];
+          var rec = packFrames(frames); rec.note = note;
+          await Store.set(partKey(i), rec);
+          done++; setPct(done, total); $('pg-v2').textContent = done + ' / ' + total;
+        });
+        await encQ;
+      }; });
+      await pool(jobs, PARALLEL);
+      await encQ;
+      if (C.stop) throw new Error('中止しました');
+      $('pg-s2').textContent = '✓ 声を作る';
+      // 組み立て
+      $('pg-s3').textContent = '◌ m4aに組み立て';
+      var allFrames = [], partFrames = [];
+      for (var i = 0; i < total; i++) {
+        var pk = await Store.get(partKey(i));
+        if (!pk) throw new Error('部品 ' + (i + 1) + ' が見つかりません。もう一度「続きから作る」を押してください');
+        var fr = unpackFrames(pk); partFrames.push(fr.length); allFrames = allFrames.concat(fr);
+        if (pk.note) C.notes.push(pk.note);
+      }
+      var tl = buildTimeline(C.plan, partFrames, RATE);
+      var m4aParts = buildM4a(allFrames, RATE, 1, BITRATE);
+      var m4aSize = 0; m4aParts.forEach(function(p){ m4aSize += p.length; });
+      $('pg-s3').textContent = '✓ m4aに組み立て'; $('pg-v3').textContent = (m4aSize / 1048576).toFixed(1) + 'MB';
+      // まとめる
+      $('pg-s4').textContent = '◌ 1つのファイルにまとめる';
+      var after2027 = new Date() >= new Date('2027-01-01T00:00:00Z');
+      var yen = (C.usage.audioSec * 25 / 1e6 * (after2027 ? 18 : 9) + C.usage.tin / 1e6 * (after2027 ? 1.5 : 0.75) + C.usage.tout / 1e6 * (after2027 ? 7.5 : 3.75)) * 150;
+      var manifest = {
+        format: 'ana-episode', version: 1, title: C.title, source: C.fileName, createdAt: new Date().toISOString(), duration: tl.duration,
+        audio: { sampleRate: RATE, bitrate: BITRATE, frames: allFrames.length },
+        settings: { gaps: { narr: S().gapNarr, line: S().gapLine, change: S().gapChange }, ttsModel: S().ttsModel, textModel: S().textModel, narratorStyle: App.cast.narrator.style },
+        segments: tl.segments, chapters: tl.chapters,
+        notes: { omittedR18: C.job.omittedR18, duplicates: C.job.duplicates, problems: C.notes },
+        stats: { audioSec: Math.round(C.usage.audioSec * 10) / 10, yen: Math.round(yen * 10) / 10 }, app: ANA_VERSION
+      };
+      var zip = zipStoreParts([{ name: 'manifest.json', parts: [new TextEncoder().encode(JSON.stringify(manifest))] }, { name: 'episode.m4a', parts: m4aParts }]);
+      var blob = new Blob(zip, { type: 'application/zip' });
+      C.result = { blob: blob, name: 'ANA_' + safeFileName(C.title.replace(/\s+/, '_')) + '.zip', manifest: manifest };
+      $('pg-s4').textContent = '✓ 1つのファイルにまとめる'; $('pg-v4').textContent = (blob.size / 1048576).toFixed(1) + 'MB';
+      setPct(total, total); $('pg-eta').textContent = '完成';
+      $('pg-result').innerHTML = '音声 ' + Math.floor(tl.duration / 60) + '分' + Math.round(tl.duration % 60) + '秒 ・ 費用 約' + Math.round(yen) + '円' +
+        (C.notes.length ? '<br>⚠ ' + C.notes.map(esc).join('<br>⚠ ') : '<br>代読・飛ばし なし');
+      $('pg-save').disabled = false; $('pg-stop').textContent = '最初に戻る';
+      C.job.done = true; await Store.set('job:last', C.job);
+      $('pg-nowwho').textContent = 'ファイル名'; $('pg-nowtx').textContent = C.result.name;
+    } catch(e){
+      var cached = await countCached().catch(function(){ return 0; });
+      $('pg-result').textContent = (C.stop ? '中止しました。' : 'エラー：' + e.message + '　') + '作った部品 ' + cached + '/' + C.plan.length + ' は端末に残っています。';
+      $('pg-stop').textContent = '続きから作る';
+      $('pg-eta').textContent = '停止中';
+    }
+    C.running = false;
+    await keepAwake(false);
+  }
+
+  async function save(){
+    if (!C.result) return;
+    var file = new File([C.result.blob], C.result.name, { type: 'application/zip' });
+    try {
+      if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: C.result.name }); return; }
+    } catch(e){ if (e.name === 'AbortError') return; }
+    var a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = C.result.name; document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  function reset(){
+    C.stop = true; C.result = null; step(1); showResume();
+  }
+  function onShow(){ if (!C.running && C.step === 1) showResume(); }
+
+  function init(){
+    $('cr-pick').onclick = function(){ $('cr-file').value = ''; $('cr-file').click(); };
+    $('cr-file').onchange = onFile;
+    $('cr-from').onchange = updateRange; $('cr-to').onchange = updateRange;
+    $('cr-toconfirm').onclick = toConfirm;
+    $('cf-go').onclick = function(){ startNew(); };
+    $('pg-save').onclick = save;
+    $('pg-stop').onclick = function(){
+      if (C.running) { if (confirm('作成を中止しますか？ 作った部品は端末に残り、続きから作れます。')) { C.stop = true; $('pg-stop').textContent = '止めています…'; } return; }
+      if (C.result) { reset(); return; }
+      run();   // 続きから作る
+    };
+    $('cr-back').onclick = function(){
+      if (C.running) { toast('作成中です。止める時は「中止」を押してください'); return; }
+      if (C.step === 3 && !C.result) { step(2); return; }
+      if (C.step === 2) { step(1); return; }
+      App.go('home');
+    };
+    step(1);
+  }
+  return { init: init, state: C, step: step, onShow: onShow };
 })();
 
 App.init();

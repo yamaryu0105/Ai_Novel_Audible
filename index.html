@@ -93,6 +93,15 @@ select.inp{font-size:14px;background-image:linear-gradient(45deg,transparent 50%
 .ly.thought .tx{font-style:italic}
 .ly.now{color:var(--text);font-size:calc(23px * var(--fs));line-height:1.5;font-weight:700}
 .ly.now .tx{background:linear-gradient(transparent 58%,var(--mark) 58%)}
+.ly.bridge{font-style:italic;font-size:calc(13px * var(--fs))}
+.ly .mk{color:var(--accent);margin-right:4px;font-style:normal}
+.seek{width:100%;height:28px;margin:0;-webkit-appearance:none;appearance:none;background:transparent}
+.seek::-webkit-slider-runnable-track{height:5px;border-radius:3px;background:var(--surface2)}
+.seek::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:8px;background:var(--text);margin-top:-5.5px}
+.follow{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 230px);height:36px;padding:0 16px;border-radius:18px;background:var(--accent);color:var(--on-accent);font-size:13px;font-weight:700;z-index:5}
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:8}
+.sheet-bg[hidden]{display:none}
+.sheet{background:var(--bg);width:100%;max-width:520px;max-height:75vh;overflow-y:auto;border-radius:20px 20px 0 0;padding:12px 18px calc(env(safe-area-inset-bottom) + 18px)}
 .ctrl{padding:8px 24px 0;display:flex;flex-direction:column;gap:12px}
 .ctrl .time{display:flex;justify-content:space-between;font-size:12px;color:var(--sub);margin-top:6px}
 .ctrl .main{display:flex;align-items:center;justify-content:space-between}
@@ -146,7 +155,7 @@ select.inp{font-size:14px;background-image:linear-gradient(45deg,transparent 50%
     <button class="icon-btn" data-go="settings" aria-label="設定"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" class="ic" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-2.7-1.1l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.1-2.7l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 2.7-1.1V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0 1.1 2.7H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1.3z"/></svg></button>
   </div>
   <div id="home-resume"></div>
-  <button class="btn outline" data-stub="3" id="btn-open">
+  <button class="btn outline" id="btn-open">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" class="ic" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
     エピソードファイルを開く
   </button>
@@ -156,33 +165,47 @@ select.inp{font-size:14px;background-image:linear-gradient(45deg,transparent 50%
     <p class="note">一覧は「どこまで聴いたか」だけを覚えています。音声はファイルアプリのフォルダにあるので、続きを聴く時は同じファイルを選び直します。</p>
   </div>
   <button class="btn primary" data-go="create">＋ 新しいエピソードを作る</button>
-  <button class="btn outline small" data-go="player" style="align-self:center">聴く画面の見本を見る</button>
 </section>
 
 <!-- ==================== 聴く ==================== -->
 <section class="screen" id="scr-player">
   <div class="bar">
     <button class="icon-btn" data-go="home" aria-label="ホームへ戻る"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" class="ic" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
-    <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700">見本：音の無い世界編</div><div style="font-size:12px;color:var(--sub)">0026 ・ 段階3で本物のファイルを再生します</div></div>
+    <div style="flex:1;min-width:0"><div id="pl-title" style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">エピソード未選択</div><div id="pl-sub" style="font-size:12px;color:var(--sub)">ホームからファイルを開いてください</div></div>
+    <button class="icon-btn" id="pl-open" aria-label="別のファイルを開く"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" class="ic" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></button>
   </div>
   <div class="lyrics" id="lyrics"></div>
+  <button class="follow" id="pl-follow" style="display:none">今の位置に戻る</button>
   <div class="ctrl">
-    <div><div class="prog"><i style="width:34%"></i></div><div class="time"><span>5:42</span><span>0026 ／ 全10件</span><span>−11:08</span></div></div>
+    <div>
+      <label for="pl-seek" class="sr">再生位置</label>
+      <input type="range" id="pl-seek" class="seek" min="0" max="1000" value="0" step="1">
+      <div class="time"><span id="pl-cur">0:00</span><span id="pl-where"></span><span id="pl-left">−0:00</span></div>
+    </div>
     <div class="main">
-      <button class="icon-btn" data-stub="3" aria-label="15秒戻る"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" class="ic" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/></svg></button>
-      <button class="icon-btn" data-stub="3" aria-label="前の文"><svg width="28" height="28" viewBox="0 0 24 24" style="fill:var(--text)" aria-hidden="true"><path d="M11 6l-8 6 8 6zM21 6l-8 6 8 6z"/></svg></button>
-      <button class="play" data-stub="3" aria-label="再生"><svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5l12 7-12 7z"/></svg></button>
-      <button class="icon-btn" data-stub="3" aria-label="次の文"><svg width="28" height="28" viewBox="0 0 24 24" style="fill:var(--text)" aria-hidden="true"><path d="M13 6l8 6-8 6zM3 6l8 6-8 6z"/></svg></button>
-      <button class="icon-btn" data-stub="3" aria-label="15秒進む"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" class="ic" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v4h-4"/></svg></button>
+      <button class="icon-btn" id="pl-back15" aria-label="15秒戻る"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" class="ic" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/></svg></button>
+      <button class="icon-btn" id="pl-prev" aria-label="前の文"><svg width="28" height="28" viewBox="0 0 24 24" style="fill:var(--text)" aria-hidden="true"><path d="M11 6l-8 6 8 6zM21 6l-8 6 8 6z"/></svg></button>
+      <button class="play" id="pl-play" aria-label="再生"><svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><path id="pl-playic" d="M7 5l12 7-12 7z"/></svg></button>
+      <button class="icon-btn" id="pl-next" aria-label="次の文"><svg width="28" height="28" viewBox="0 0 24 24" style="fill:var(--text)" aria-hidden="true"><path d="M13 6l8 6-8 6zM3 6l8 6-8 6z"/></svg></button>
+      <button class="icon-btn" id="pl-fwd15" aria-label="15秒進む"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" class="ic" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v4h-4"/></svg></button>
     </div>
     <div class="tools">
-      <button data-stub="3"><b id="pl-speed">1.2×</b><span>速度</span></button>
-      <button data-stub="3"><b>≡</b><span>目次</span></button>
-      <button data-stub="3"><b>☆</b><span>しおり</span></button>
-      <button data-stub="3"><b>◷</b><span>タイマー</span></button>
+      <button id="pl-speedbtn"><b id="pl-speed">1.2×</b><span>速度</span></button>
+      <button id="pl-tocbtn"><b>≡</b><span>目次</span></button>
+      <button id="pl-markbtn"><b id="pl-markic">☆</b><span>しおり</span></button>
+      <button id="pl-timerbtn"><b id="pl-timeric">◷</b><span id="pl-timerlbl">タイマー</span></button>
     </div>
   </div>
+  <audio id="pl-audio" preload="auto" playsinline></audio>
 </section>
+
+<div class="sheet-bg" id="sheet-bg" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <div class="bar"><h1 id="sheet-title" style="font-size:16px">—</h1><button class="icon-btn" id="sheet-close" aria-label="閉じる"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" class="ic" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div id="sheet-body"></div>
+  </div>
+</div>
+<input type="file" id="ep-file" accept=".zip,application/zip" class="sr">
 
 <!-- ==================== 作る ==================== -->
 <section class="screen" id="scr-create">
@@ -300,7 +323,7 @@ select.inp{font-size:14px;background-image:linear-gradient(45deg,transparent 50%
     <button class="row" data-go="dict"><span>読み方の登録</span><span class="v" id="v-dict">…</span></button>
   </div>
   <button class="danger" id="btn-clearpos">聴いた位置の記録をすべて消す</button>
-  <p class="note" style="text-align:center;margin:0">ANA 段階2（作る）</p>
+  <p class="note" style="text-align:center;margin:0">ANA 段階3（聴く）</p>
 </section>
 
 <!-- ==================== キャストと声 ==================== -->
@@ -333,7 +356,7 @@ select.inp{font-size:14px;background-image:linear-gradient(45deg,transparent 50%
 
 <script>
 // ===== PURE START =====
-var ANA_VERSION = 'phase2-2026-11-25';
+var ANA_VERSION = 'phase3-2026-11-25';
 
 var DEFAULT_SETTINGS = {
   theme: 'night', fontSize: 'normal', speed: 1.2, apiKey: '',
@@ -909,6 +932,64 @@ function stripAdts(u8){
   return u8;
 }
 
+
+// ===== 聴く（DOMに依存しない） =====
+// 無圧縮zipを読む → {名前: Uint8Array}
+function unzipStore(u8){
+  var dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength), eocd = -1;
+  for (var i = u8.length - 22; i >= Math.max(0, u8.length - 65557); i--) { if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; } }
+  if (eocd < 0) throw new Error('zipファイルではありません');
+  var count = dv.getUint16(eocd + 10, true), p = dv.getUint32(eocd + 16, true), dec = new TextDecoder(), out = {};
+  for (var n = 0; n < count; n++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) throw new Error('zipの目次が壊れています');
+    var method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true);
+    var nl = dv.getUint16(p + 28, true), xl = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), lho = dv.getUint32(p + 42, true);
+    var name = dec.decode(u8.subarray(p + 46, p + 46 + nl));
+    if (method === 0) { var start = lho + 30 + dv.getUint16(lho + 26, true) + dv.getUint16(lho + 28, true); out[name] = u8.subarray(start, start + csize); }
+    else out[name] = null;   // 圧縮されたもの（ANAが作ったzipではない）
+    p += 46 + nl + xl + cl;
+  }
+  return out;
+}
+
+function validateManifest(m){
+  if (!m || m.format !== 'ana-episode') return 'ANAで作ったエピソードファイルではありません';
+  if (!Array.isArray(m.segments) || !m.segments.length) return '文の目次が空です';
+  if (!(m.duration > 0)) return '長さの情報がありません';
+  return null;
+}
+function episodeKey(m){ return [m.title, m.createdAt, m.duration].join('|'); }
+
+// 時刻 t のときに読んでいる文の番号（最初より前は0）
+function findSegIndex(segs, t){
+  var lo = 0, hi = segs.length - 1, ans = 0;
+  while (lo <= hi) { var mid = (lo + hi) >> 1; if (segs[mid].t <= t + 1e-6) { ans = mid; lo = mid + 1; } else hi = mid - 1; }
+  return ans;
+}
+// 前の文：今の文に入って1.5秒を過ぎていれば今の文の頭、そうでなければ1つ前
+function prevTarget(segs, t){ var i = findSegIndex(segs, t); if (t - segs[i].t > 1.5 || i === 0) return segs[i].t; return segs[i - 1].t; }
+function nextTarget(segs, t){ var i = findSegIndex(segs, t); return i + 1 < segs.length ? segs[i + 1].t : null; }
+
+function fmtTime(sec){
+  sec = Math.max(0, Math.floor(sec || 0));
+  var h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
+  return (h ? h + ':' + ('0' + m).slice(-2) : m) + ':' + ('0' + s).slice(-2);
+}
+
+// 聴いた位置の記録を更新（新しい順に最大50件）
+function upsertPosition(map, key, rec){
+  var out = {}; Object.keys(map || {}).forEach(function(k){ out[k] = map[k]; });
+  var old = out[key] || {};
+  var merged = {}; Object.keys(old).forEach(function(k){ merged[k] = old[k]; }); Object.keys(rec).forEach(function(k){ merged[k] = rec[k]; });
+  if (!Array.isArray(merged.bookmarks)) merged.bookmarks = [];
+  out[key] = merged;
+  var keys = Object.keys(out).sort(function(a, b){ return String(out[b].updatedAt || '') < String(out[a].updatedAt || '') ? -1 : 1; });
+  keys.slice(50).forEach(function(k){ delete out[k]; });
+  return out;
+}
+// 文の表示用クラス
+function lyricClass(i, cur){ return i === cur ? 'now' : (i < cur - 2 ? 'past' : (i < cur ? 'near' : '')); }
+
 function initialOf(c){
   var parts = String(c.name || '').split(/\s+/);
   return parts.length > 1 ? String((c.aliases && c.aliases[0]) || parts[parts.length - 1])[0] : String(c.name || '?')[0];
@@ -955,6 +1036,7 @@ var Store = (function(){
   function getSettings(){ var raw = lsGet('ana_settings'); var d = null; try { d = raw ? JSON.parse(raw) : null; } catch(e){} return restoreSettings(d); }
   function saveSettings(s){ return lsSet('ana_settings', JSON.stringify(s)); }
   function getPositions(){ try { return JSON.parse(lsGet('ana_pos') || '{}') || {}; } catch(e){ return {}; } }
+  function savePositions(m){ return lsSet('ana_pos', JSON.stringify(m || {})); }
   function clearPositions(){ try { localStorage.removeItem('ana_pos'); } catch(e){} }
   async function keys(){
     var db = await open();
@@ -966,7 +1048,7 @@ var Store = (function(){
     if (!db) { delete mem[k]; try { localStorage.removeItem('ana_kv_' + k); } catch(e){} return; }
     return new Promise(function(res){ var tx = db.transaction(ST, 'readwrite'); tx.objectStore(ST).delete(k); tx.oncomplete = function(){ res(); }; tx.onerror = function(){ res(); }; });
   }
-  return { keys: keys, del: del, get: get, set: set, getSettings: getSettings, saveSettings: saveSettings, getPositions: getPositions, clearPositions: clearPositions };
+  return { keys: keys, del: del, get: get, set: set, getSettings: getSettings, saveSettings: saveSettings, getPositions: getPositions, savePositions: savePositions, clearPositions: clearPositions };
 })();
 
 // ===== アプリ =====
@@ -991,8 +1073,8 @@ var App = (function(){
     document.querySelectorAll('[data-theme-pick]').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-theme-pick') === S.theme); });
     document.querySelectorAll('#seg-fs button').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-fs') === S.fontSize); });
     document.querySelectorAll('#seg-speed button').forEach(function(b){ b.classList.toggle('on', Number(b.getAttribute('data-speed')) === S.speed); });
-    $('pl-speed').textContent = S.speed.toFixed(1) + '×';
-    if (CAST) { renderLyrics(); renderCast(); }
+    if (window.Player && Player.audio) Player.applySpeed();
+    if (CAST) { renderCast(); if (window.Player && Player.audio) Player.render(); }
   }
 
   function go(name){
@@ -1004,39 +1086,22 @@ var App = (function(){
     if (name === 'settings') renderSettings();
     if (name === 'cast') renderCast();
     if (name === 'dict') renderDict();
-    if (name === 'player') renderLyrics();
     if (name === 'create' && window.Create) Create.onShow();
   }
 
   // ---- ホーム ----
   function renderHome(){
-    var pos = Store.getPositions(), keys = Object.keys(pos).sort(function(a, b){ return (pos[b].updatedAt || '') < (pos[a].updatedAt || '') ? -1 : 1; });
-    $('home-resume').innerHTML = keys.length ? '' : '';
+    var pos = Store.getPositions(), keys = Object.keys(pos).sort(function(a, b){ return String(pos[b].updatedAt || '') < String(pos[a].updatedAt || '') ? -1 : 1; });
+    var last = keys.filter(function(k){ return !pos[k].finished; })[0];
+    if (last) {
+      var p = pos[last], pct = Math.min(100, Math.round(p.pos / (p.duration || 1) * 100));
+      $('home-resume').innerHTML = '<div class="card resume" style="display:flex;flex-direction:column;gap:10px"><div style="font-size:12px;color:var(--accent);font-weight:700">続きから聴く</div><div><div class="t">' + esc(p.title) + '</div><div class="note" style="margin-top:2px">' + esc((p.from || '') + ' ・ ' + (p.snippet || '')) + '</div></div><div class="prog"><i style="width:' + pct + '%"></i></div><div style="display:flex;justify-content:space-between;align-items:center"><span class="note">残り ' + fmtTime((p.duration || 0) - (p.pos || 0)) + '</span><button class="btn primary small" id="home-resgo">ファイルを選んで再生</button></div></div>';
+      $('home-resgo').onclick = function(){ if (Player.state.key === last && Player.state.man) { go('player'); return; } Player.pick(last); };
+    } else $('home-resume').innerHTML = '';
     $('home-recent').innerHTML = keys.length
-      ? keys.slice(0, 5).map(function(k){ var p = pos[k]; return '<div class="row"><span>' + esc(p.title) + '</span><span class="v">' + (p.finished ? '聴き終わり' : Math.round((p.pos / (p.duration || 1)) * 100) + '%') + '</span></div>'; }).join('')
+      ? keys.slice(0, 5).map(function(k){ var p = pos[k]; return '<button class="row" data-recent="' + esc(k) + '"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(p.title) + '</span><span class="v">' + (p.finished ? '聴き終わり' : Math.round(((p.pos || 0) / (p.duration || 1)) * 100) + '%') + '</span></button>'; }).join('')
       : '<div class="empty">まだありません</div>';
-  }
-
-  // ---- 聴く（見本） ----
-  var SAMPLE = [
-    { k: 'narr', t: '今からおよそ100年前の、精霊界の最果て――辺境の地。' },
-    { k: 'narr', t: '悠の右手には、小さな、そして少し冷たい手の感触があった。' },
-    { k: 'line', w: '音無 悠', t: '「ここがリリベルが居たところか……何もないな、リリベル」' },
-    { k: 'narr', t: '悠が静かに語りかけると、幼いリリベルはビクッと小さな肩を揺らした。' },
-    { k: 'line', w: 'リリベル', t: '「……おにぃ、ちゃん……？ ……ここ、なにも、ないのぉ。……冷たくて、暗くて、誰もいないのぉ」', now: true },
-    { k: 'narr', t: 'ぽつりと漏らした少女の言葉。かつて食欲の悪魔に育児放棄され、この何もない精霊界の辺境に捨てられた彼女。' },
-    { k: 'thought', w: '音無 悠', t: '（……ああ、やっぱり、お前はただ、寂しかっただけなんだな）' },
-    { k: 'narr', t: '悠は、自分の胸の奥が締め付けられるのを感じた。' }
-  ];
-  function castByName(n){ return (CAST && CAST.cast || []).find(function(c){ return c.name === n; }); }
-  function renderLyrics(){
-    var nowIdx = SAMPLE.findIndex(function(x){ return x.now; });
-    $('lyrics').innerHTML = SAMPLE.map(function(x, i){
-      var cls = 'ly ' + (x.k === 'thought' ? 'thought ' : '') + (i === nowIdx ? 'now' : i < nowIdx - 2 ? 'past' : i < nowIdx ? 'near' : '');
-      var c = x.w ? castByName(x.w) : null;
-      var who = x.w ? '<span class="who" style="color:' + nameColor(c ? c.color : '#cccccc', S.theme) + '">' + esc(x.w) + (x.k === 'thought' ? ' ・ 心の声' : '') + '</span>' : '';
-      return '<p class="' + cls + '" data-stub="3">' + who + '<span class="tx">' + esc(x.t) + '</span></p>';
-    }).join('');
+    document.querySelectorAll('[data-recent]').forEach(function(b){ b.onclick = function(){ var k = b.getAttribute('data-recent'); if (Player.state.key === k && Player.state.man) { go('player'); return; } Player.pick(k); }; });
   }
 
   // ---- 設定 ----
@@ -1122,6 +1187,8 @@ var App = (function(){
     });
     bindSettings();
     Create.init();
+    Player.init();
+    $('btn-open').onclick = function(){ Player.pick(); };
     $('cast-q').oninput = renderCast;
     $('btn-resetcast').onclick = async function(){ if (confirm('キャストを初期状態に戻します。編集した声IDや指示は消えます。よろしいですか？')) { CAST = buildSeedCast(); await Store.set('cast', CAST); renderCast(); toast('初期状態に戻しました'); } };
     $('btn-resetdict').onclick = async function(){ if (confirm('読み方を初期状態に戻します。追加した登録は消えます。よろしいですか？')) { DICT = buildSeedDict(); await Store.set('dict', DICT); renderDict(); toast('初期状態に戻しました'); } };
@@ -1132,7 +1199,8 @@ var App = (function(){
     go(location.hash.slice(1) || 'home');
     App.ready = true;
   }
-  return { init: init, go: go, toast: toast, esc: esc, get settings(){ return S; }, get cast(){ return CAST; }, get dict(){ return DICT; }, ready: false };
+  function setSetting(k, v){ var d = {}; Object.keys(S).forEach(function(x){ d[x] = S[x]; }); d[k] = v; S = restoreSettings(d); save(); applyTheme(); }
+  return { init: init, go: go, toast: toast, esc: esc, setSetting: setSetting, get settings(){ return S; }, get cast(){ return CAST; }, get dict(){ return DICT; }, ready: false };
 })();
 
 
@@ -1499,6 +1567,210 @@ var Create = (function(){
     step(1);
   }
   return { init: init, state: C, step: step, onShow: onShow };
+})();
+
+
+// ===== 聴く（画面と処理） =====
+var Player = (function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var P = { man: null, key: null, url: null, cur: -1, follow: true, userTimer: null, progScroll: false, dragging: false, timerEnd: null, timerMode: null, saveTimer: null, pendingKey: null };
+  var au;
+
+  function S(){ return App.settings; }
+  function toast(m){ App.toast(m); }
+  function esc(s){ return App.esc(s); }
+
+  function colorOf(who){
+    var c = (App.cast && App.cast.cast || []).find(function(x){ return x.name === who; });
+    return nameColor(c ? c.color : '#bdb6cf', S().theme);
+  }
+
+  // ---------- 開く ----------
+  function pick(expectKey){ P.pendingKey = expectKey || null; $('ep-file').value = ''; $('ep-file').click(); }
+  function readFile(f){ return new Promise(function(res, rej){ var fr = new FileReader(); fr.onload = function(){ res(new Uint8Array(fr.result)); }; fr.onerror = function(){ rej(new Error('ファイルを読めませんでした')); }; fr.readAsArrayBuffer(f); }); }
+  async function openFile(f){
+    try {
+      var files = unzipStore(await readFile(f));
+      if (!files['manifest.json'] || !files['episode.m4a']) throw new Error('ANAで作ったエピソードファイルではありません');
+      var man = JSON.parse(new TextDecoder().decode(files['manifest.json']));
+      var bad = validateManifest(man); if (bad) throw new Error(bad);
+      load(man, new Blob([files['episode.m4a']], { type: 'audio/mp4' }));
+    } catch(e){ toast('開けませんでした：' + e.message); }
+  }
+  function load(man, blob){
+    savePos();
+    if (P.url) URL.revokeObjectURL(P.url);
+    P.man = man; P.key = episodeKey(man); P.cur = -1; P.follow = true;
+    P.url = URL.createObjectURL(blob);
+    au.src = P.url;
+    applySpeed();
+    var rec = Store.getPositions()[P.key];
+    var start = rec && !rec.finished && rec.pos > 1 ? Math.max(0, rec.pos - 2) : 0;
+    if (P.pendingKey && P.pendingKey !== P.key) toast('選んだファイルは前回と別のエピソードです');
+    else if (start > 0) toast('続きから再生します（' + fmtTime(start) + '）');
+    P.pendingKey = null;
+    $('pl-title').textContent = man.title;
+    render();
+    var seekTo = function(){ au.currentTime = start; tick(); };
+    if (au.readyState >= 1) seekTo(); else au.addEventListener('loadedmetadata', seekTo, { once: true });
+    setupMediaSession();
+    App.go('player');
+    savePos({ updatedAt: new Date().toISOString() });
+  }
+
+  // ---------- 表示 ----------
+  function render(){
+    var box = $('lyrics');
+    if (!P.man) { box.innerHTML = '<div class="empty" style="padding-top:30vh">エピソードファイルを開いてください<br><br><button class="btn outline small" id="pl-open2">ファイルを開く</button></div>'; var b = $('pl-open2'); if (b) b.onclick = function(){ pick(); }; return; }
+    var marks = (Store.getPositions()[P.key] || {}).bookmarks || [];
+    box.innerHTML = P.man.segments.map(function(s, i){
+      var who = (s.kind === 'line' || s.kind === 'thought') ? '<span class="who" style="color:' + colorOf(s.who) + '">' + esc(s.who) + (s.kind === 'thought' ? ' ・ 心の声' : '') + '</span>' : '';
+      var mk = marks.indexOf(i) >= 0 ? '<span class="mk" aria-label="しおり">★</span>' : '';
+      var tx = s.kind === 'line' ? '「' + esc(s.text) + '」' : s.kind === 'thought' ? '（' + esc(s.text) + '）' : esc(s.text);
+      return '<p class="ly' + (s.kind === 'thought' ? ' thought' : '') + (s.kind === 'bridge' ? ' bridge' : '') + '" data-i="' + i + '">' + who + '<span class="tx">' + mk + tx + '</span></p>';
+    }).join('');
+    P.cur = -1; tick(true);
+  }
+  function setCurrent(i, force){
+    if (i === P.cur && !force) return;
+    P.cur = i;
+    var els = $('lyrics').children;
+    for (var k = 0; k < els.length; k++) { var c = lyricClass(k, i); els[k].className = 'ly' + (els[k].classList.contains('thought') ? ' thought' : '') + (els[k].classList.contains('bridge') ? ' bridge' : '') + (c ? ' ' + c : ''); }
+    var s = P.man.segments[i];
+    $('pl-sub').textContent = s.from + ' ・ ' + (i + 1) + ' / ' + P.man.segments.length;
+    $('pl-where').textContent = s.from;
+    var marks = (Store.getPositions()[P.key] || {}).bookmarks || [];
+    $('pl-markic').textContent = marks.indexOf(i) >= 0 ? '★' : '☆';
+    if (P.follow) scrollToCur();
+  }
+  function scrollToCur(){
+    var box = $('lyrics'), el = box.children[P.cur]; if (!el) return;
+    P.progScroll = true;
+    var top = el.offsetTop - box.offsetTop - box.clientHeight * 0.4;
+    try { box.scrollTo({ top: Math.max(0, top), behavior: 'smooth' }); } catch(e){ box.scrollTop = Math.max(0, top); }
+    clearTimeout(P.psTimer); P.psTimer = setTimeout(function(){ P.progScroll = false; }, 700);
+  }
+  function tick(force){
+    if (!P.man) return;
+    var t = au.currentTime || 0, d = isFinite(au.duration) && au.duration > 0 ? au.duration : P.man.duration;
+    setCurrent(findSegIndex(P.man.segments, t), force);
+    if (!P.dragging) $('pl-seek').value = String(Math.round(t / d * 1000));
+    $('pl-cur').textContent = fmtTime(t); $('pl-left').textContent = '−' + fmtTime(d - t);
+    if (P.timerEnd && Date.now() >= P.timerEnd) { au.pause(); clearTimer(); toast('タイマーで止めました'); }
+    if (P.timerEnd) $('pl-timerlbl').textContent = '残り' + Math.ceil((P.timerEnd - Date.now()) / 60000) + '分';
+    updatePositionState();
+  }
+  function onUserScroll(){
+    // touchmove／wheel は必ず指（またはホイール）による操作なので、自動スクロール中でも追従を止める
+    P.follow = false; $('pl-follow').style.display = 'block';
+    clearTimeout(P.userTimer);
+    P.userTimer = setTimeout(backToFollow, 4000);
+  }
+  function backToFollow(){ P.follow = true; $('pl-follow').style.display = 'none'; scrollToCur(); }
+
+  // ---------- 操作 ----------
+  function seek(t){ if (!P.man) return; au.currentTime = Math.max(0, Math.min(t, (au.duration || P.man.duration) - 0.05)); P.follow = true; $('pl-follow').style.display = 'none'; tick(); savePos(); }
+  function togglePlay(){ if (!P.man) { pick(); return; } if (au.paused) au.play().catch(function(e){ toast('再生できませんでした：' + e.message); }); else au.pause(); }
+  function applySpeed(){ au.preservesPitch = true; au.webkitPreservesPitch = true; au.defaultPlaybackRate = S().speed; au.playbackRate = S().speed; $('pl-speed').textContent = S().speed.toFixed(1) + '×'; }
+  function setPlayIcon(){ $('pl-playic').setAttribute('d', au.paused ? 'M7 5l12 7-12 7z' : 'M6 5h4v14H6zM14 5h4v14h-4z'); $('pl-play').setAttribute('aria-label', au.paused ? '再生' : '一時停止'); }
+
+  // ---------- シート ----------
+  function sheet(title, html){ $('sheet-title').textContent = title; $('sheet-body').innerHTML = html; $('sheet-bg').hidden = false; }
+  function closeSheet(){ $('sheet-bg').hidden = true; }
+  function speedSheet(){
+    sheet('再生速度', '<div class="seg" style="margin:4px 0 10px">' + [1, 1.2, 1.5, 2].map(function(v){ return '<button data-sp="' + v + '" class="' + (v === S().speed ? 'on' : '') + '">' + v.toFixed(1) + '×</button>'; }).join('') + '</div><p class="note">いつもの速度としても覚えます。音の高さは変わりません。</p>');
+    document.querySelectorAll('[data-sp]').forEach(function(b){ b.onclick = function(){ App.setSetting('speed', Number(b.getAttribute('data-sp'))); applySpeed(); closeSheet(); }; });
+  }
+  function tocSheet(){
+    if (!P.man) return;
+    var marks = ((Store.getPositions()[P.key] || {}).bookmarks || []).slice().sort(function(a, b){ return a - b; });
+    var segs = P.man.segments, curFrom = segs[Math.max(0, P.cur)].from;
+    var html = '';
+    if (marks.length) html += '<div class="sec">しおり</div><div class="rows" style="margin-bottom:10px">' + marks.map(function(i){ var s = segs[i]; return s ? '<button class="row" data-t="' + s.t + '"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">★ ' + esc(s.text.slice(0, 26)) + '</span><span class="v">' + fmtTime(s.t) + '</span></button>' : ''; }).join('') + '</div>';
+    html += '<div class="sec">目次</div><div class="rows toc">' + P.man.chapters.map(function(c){
+      var first = segs[findSegIndex(segs, c.t)];
+      return '<button class="row" data-t="' + c.t + '"' + (c.from === curFrom ? ' style="font-weight:700"' : '') + '><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(c.from) + ' ' + (c.src === 'author' ? '作者' : 'AI') + ' ・ ' + esc((first && first.text || '').slice(0, 18)) + '</span><span class="v">' + fmtTime(c.t) + '</span></button>';
+    }).join('') + '</div>';
+    sheet('目次', html);
+    document.querySelectorAll('#sheet-body [data-t]').forEach(function(b){ b.onclick = function(){ seek(Number(b.getAttribute('data-t'))); closeSheet(); }; });
+  }
+  function toggleMark(){
+    if (!P.man || P.cur < 0) return;
+    var rec = Store.getPositions()[P.key] || {}, marks = (rec.bookmarks || []).slice(), k = marks.indexOf(P.cur);
+    if (k >= 0) marks.splice(k, 1); else marks.push(P.cur);
+    savePos({ bookmarks: marks });
+    toast(k >= 0 ? 'しおりを外しました' : 'しおりを付けました');
+    render();
+  }
+  function timerSheet(){
+    sheet('おやすみタイマー', '<div class="rows">' + [[15, '15分'], [30, '30分'], [60, '60分'], ['end', 'このエピソードの終わりまで'], [0, 'オフ']].map(function(o){ return '<button class="row" data-tm="' + o[0] + '"><span>' + o[1] + '</span></button>'; }).join('') + '</div>');
+    document.querySelectorAll('[data-tm]').forEach(function(b){ b.onclick = function(){
+      var v = b.getAttribute('data-tm');
+      clearTimer();
+      if (v === 'end') { P.timerMode = 'end'; $('pl-timerlbl').textContent = '終わりまで'; }
+      else if (+v > 0) { P.timerMode = 'min'; P.timerEnd = Date.now() + (+v) * 60000; $('pl-timerlbl').textContent = '残り' + v + '分'; }
+      closeSheet();
+    }; });
+  }
+  function clearTimer(){ P.timerEnd = null; P.timerMode = null; $('pl-timerlbl').textContent = 'タイマー'; }
+
+  // ---------- 聴いた位置 ----------
+  function savePos(extra){
+    if (!P.man || !P.key) return;
+    var t = au.currentTime || 0, s = P.man.segments[findSegIndex(P.man.segments, t)];
+    var rec = { title: P.man.title, createdAt: P.man.createdAt, duration: P.man.duration, pos: Math.round(t * 10) / 10, segIndex: findSegIndex(P.man.segments, t),
+                from: s.from, snippet: (s.kind === 'line' ? s.who + '「' + s.text + '」' : s.text).slice(0, 40), updatedAt: new Date().toISOString() };
+    if (extra) Object.keys(extra).forEach(function(k){ rec[k] = extra[k]; });
+    Store.savePositions(upsertPosition(Store.getPositions(), P.key, rec));
+  }
+
+  // ---------- ロック画面 ----------
+  function setupMediaSession(){
+    if (!('mediaSession' in navigator) || !P.man) return;
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({ title: P.man.title, artist: 'ANA', album: 'Ai Novel Audible', artwork: [{ src: 'ana-icon.png', sizes: '180x180', type: 'image/png' }] });
+      var ms = navigator.mediaSession, H = function(n, f){ try { ms.setActionHandler(n, f); } catch(e){} };
+      H('play', function(){ au.play(); }); H('pause', function(){ au.pause(); });
+      H('seekbackward', function(d){ seek(au.currentTime - ((d && d.seekOffset) || 15)); });
+      H('seekforward', function(d){ seek(au.currentTime + ((d && d.seekOffset) || 15)); });
+      H('previoustrack', function(){ seek(prevTarget(P.man.segments, au.currentTime)); });
+      H('nexttrack', function(){ var n = nextTarget(P.man.segments, au.currentTime); if (n !== null) seek(n); });
+      H('seekto', function(d){ if (d && d.seekTime !== undefined) seek(d.seekTime); });
+    } catch(e){}
+  }
+  var lastPS = 0;
+  function updatePositionState(){
+    if (!('mediaSession' in navigator) || !navigator.mediaSession.setPositionState || !isFinite(au.duration)) return;
+    var now = Date.now(); if (now - lastPS < 1000) return; lastPS = now;
+    try { navigator.mediaSession.setPositionState({ duration: au.duration, playbackRate: au.playbackRate || 1, position: Math.min(au.currentTime, au.duration) }); } catch(e){}
+  }
+
+  function init(){
+    au = $('pl-audio');
+    $('ep-file').onchange = function(e){ var f = e.target.files && e.target.files[0]; if (f) openFile(f); };
+    $('pl-open').onclick = function(){ pick(); };
+    au.addEventListener('timeupdate', function(){ tick(); });
+    au.addEventListener('play', function(){ setPlayIcon(); applySpeed(); clearInterval(P.saveTimer); P.saveTimer = setInterval(function(){ savePos(); }, 5000); });
+    au.addEventListener('pause', function(){ setPlayIcon(); clearInterval(P.saveTimer); savePos(); });
+    au.addEventListener('ended', function(){ setPlayIcon(); clearTimer(); savePos({ finished: true }); toast('聴き終わりました'); });
+    au.addEventListener('seeked', function(){ tick(); });
+    $('lyrics').addEventListener('click', function(e){ var p = e.target.closest('.ly'); if (!p || !P.man) return; seek(P.man.segments[+p.getAttribute('data-i')].t); if (au.paused) au.play().catch(function(){}); });
+    ['touchmove', 'wheel'].forEach(function(ev){ $('lyrics').addEventListener(ev, onUserScroll, { passive: true }); });
+    $('pl-follow').onclick = function(){ clearTimeout(P.userTimer); backToFollow(); };
+    $('pl-play').onclick = togglePlay;
+    $('pl-back15').onclick = function(){ seek(au.currentTime - 15); };
+    $('pl-fwd15').onclick = function(){ seek(au.currentTime + 15); };
+    $('pl-prev').onclick = function(){ if (P.man) seek(prevTarget(P.man.segments, au.currentTime)); };
+    $('pl-next').onclick = function(){ if (!P.man) return; var n = nextTarget(P.man.segments, au.currentTime); if (n !== null) seek(n); };
+    $('pl-seek').addEventListener('input', function(){ if (!P.man) return; P.dragging = true; var d = au.duration || P.man.duration; $('pl-cur').textContent = fmtTime(+$('pl-seek').value / 1000 * d); });
+    $('pl-seek').addEventListener('change', function(){ if (!P.man) return; P.dragging = false; seek(+$('pl-seek').value / 1000 * (au.duration || P.man.duration)); });
+    $('pl-speedbtn').onclick = speedSheet; $('pl-tocbtn').onclick = tocSheet; $('pl-markbtn').onclick = toggleMark; $('pl-timerbtn').onclick = timerSheet;
+    $('sheet-close').onclick = closeSheet; $('sheet-bg').addEventListener('click', function(e){ if (e.target === $('sheet-bg')) closeSheet(); });
+    document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'hidden') savePos(); });
+    window.addEventListener('pagehide', function(){ savePos(); });
+    applySpeed(); setPlayIcon(); render();
+  }
+  return { init: init, pick: pick, openFile: openFile, render: render, applySpeed: applySpeed, state: P, get audio(){ return au; } };
 })();
 
 App.init();
